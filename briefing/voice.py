@@ -8,6 +8,7 @@ from . import aerodromes, config, llm
 PROMPT = (config.PROMPTS / "voice_prompt.md").read_text(encoding="utf-8")
 VOICE_ID = "keLVje3aBMuRpxuu0bqO"
 VOICE_MODEL = "eleven_multilingual_v2"
+VOICE_SETTINGS = {"speed": 1.2, "stability": 0.85}  # fastest allowed (0.7-1.2); steadier than the default 0.5
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 
 
@@ -136,7 +137,7 @@ def speak(text):
     """MP3 of the text, read by ElevenLabs."""
     r = requests.post(f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
                       headers={"xi-api-key": config.env("ELEVENLABS_API_KEY")},
-                      json={"text": text, "model_id": VOICE_MODEL}, timeout=120)
+                      json={"text": text, "model_id": VOICE_MODEL, "voice_settings": VOICE_SETTINGS}, timeout=120)
     if r.status_code >= 400:
         raise RuntimeError(f"ElevenLabs HTTP {r.status_code}: {r.text[:300]}")
     return r.content
