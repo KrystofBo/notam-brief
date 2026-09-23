@@ -41,19 +41,29 @@ def schema(ids):
             "required": ["weather_summary", "items"], "additionalProperties": False}
 
 
-def chat(model, messages, response_format=None, max_tokens=16000):
+def supports_reasoning(model):
+    try:
+        return "reasoning" in ((models_info().get(model) or {}).get("supported_features") or [])
+    except Exception:
+        return False
+
+
+def chat(model, messages, response_format=None, max_tokens=32000, reasoning_effort=None):
     body = {"model": model, "messages": messages, "temperature": 0, "max_tokens": max_tokens}
     if response_format:
         body["response_format"] = response_format
+    if reasoning_effort and supports_reasoning(model):
+        body["reasoning_effort"] = reasoning_effort  # "none" turns DeepSeek's thinking off
     headers = {"Authorization": f"Bearer {config.api_key()}"}
     t0 = time.perf_counter()
-    for attempt in range(4):
+    for attempt in range(6):
         try:
             r = requests.post(f"{config.NEBIUS_BASE_URL}/chat/completions", json=body, headers=headers, timeout=600)
         except requests.RequestException as e:
             raise LLMError(f"request failed: {e}") from e
-        if r.status_code in (429, 502, 503) and attempt < 3:
-            time.sleep(2 ** attempt * 2)
+        if r.status_code in (429, 502, 503, 504) and attempt < 5:
+            wait = r.headers.get("Retry-After")
+            time.sleep(float(wait) if wait and wait.replace(".", "", 1).isdigit() else 4 * 2 ** attempt)
             continue
         break
     if r.status_code >= 400:
@@ -90,16 +100,16 @@ FORMAT_OK = {}  # model -> index into _formats() of the first response_format th
 
 def _formats(ids):
     s = schema(ids)
-    return [{"type": "json_schema", "json_schema": s},  # Token Factory docs: the bare schema
-            {"type": "json_schema", "json_schema": {"name": "briefing", "schema": s, "strict": True}},  # OpenAI style
+    return [{"type": "json_schema", "json_schema": {"name": "briefing", "schema": s, "strict": True}},  # OpenAI style
+            {"type": "json_schema", "json_schema": s},  # bare schema, as in the Token Factory docs
             {"type": "json_object"}]  # no schema support: the prompt carries the contract
 
 
-def _chat_json(model, msgs, ids):
+def _chat_json(model, msgs, ids, reasoning_effort=None):
     fmts, err = _formats(ids), None
     for i in range(FORMAT_OK.get(model, 0), len(fmts)):
         try:
-            res = chat(model, msgs, fmts[i])
+            res = chat(model, msgs, fmts[i], reasoning_effort=reasoning_effort)
         except LLMError as e:
             if not str(e).startswith(("HTTP 400", "HTTP 422")):
                 raise
@@ -110,11 +120,11 @@ def _chat_json(model, msgs, ids):
     raise err
 
 
-def _assess_chunk(model, flight_block, weather_text, chunk, weather_here, depth=0):
+def _assess_chunk(model, flight_block, weather_text, chunk, weather_here, reasoning_effort=None, depth=0):
     ids = [n["id"] for n in chunk]
     msgs = [{"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_message(flight_block, weather_text, chunk, weather_here)}]
-    res = _chat_json(model, msgs, ids)
+    res = _chat_json(model, msgs, ids, reasoning_effort)
     calls, errors = [res], []
     try:
         out = parse_json(res["content"])
@@ -123,8 +133,8 @@ def _assess_chunk(model, flight_block, weather_text, chunk, weather_here, depth=
     if (out is None or res["finish"] == "length") and len(chunk) > 1 and depth < 3:
         # Truncated or unparseable: split the chunk and try again rather than losing NOTAMs.
         mid = len(chunk) // 2
-        a = _assess_chunk(model, flight_block, weather_text, chunk[:mid], weather_here, depth + 1)
-        b = _assess_chunk(model, flight_block, weather_text, chunk[mid:], False, depth + 1)
+        a = _assess_chunk(model, flight_block, weather_text, chunk[:mid], weather_here, reasoning_effort, depth + 1)
+        b = _assess_chunk(model, flight_block, weather_text, chunk[mid:], False, reasoning_effort, depth + 1)
         return {"weather_summary": a["weather_summary"], "items": a["items"] + b["items"],
                 "calls": calls + a["calls"] + b["calls"],
                 "errors": [f"split chunk of {len(chunk)} after {'truncation' if out else 'invalid JSON'}"]
@@ -156,13 +166,14 @@ def price(model):
     return config.PRICES.get(model)
 
 
-def assess(model, flight_block, weather_text, notams, chunk_size=80, workers=4):
+def assess(model, flight_block, weather_text, notams, chunk_size=80, workers=4, reasoning_effort=None):
     chunks = [notams[i:i + chunk_size] for i in range(0, len(notams), chunk_size)] or [[]]
     if not notams and not weather_text:
         chunks = []
     t0 = time.perf_counter()
     with ThreadPoolExecutor(max_workers=max(1, min(workers, len(chunks)))) as pool:
-        parts = list(pool.map(lambda ic: _assess_chunk(model, flight_block, weather_text, ic[1], ic[0] == 0),
+        parts = list(pool.map(lambda ic: _assess_chunk(model, flight_block, weather_text, ic[1], ic[0] == 0,
+                                                       reasoning_effort),
                               enumerate(chunks)))
     latency = time.perf_counter() - t0
 

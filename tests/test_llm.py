@@ -40,7 +40,7 @@ def test_order_missing_and_priority(monkeypatch):
 def test_invalid_json_splits_chunk(monkeypatch):
     calls = []
 
-    def fake(model, messages, response_format=None, max_tokens=16000):
+    def fake(model, messages, response_format=None, **kw):
         user = messages[1]["content"]
         ids = [n["id"] for n in NOTAMS if n["id"] in user]
         calls.append(ids)
@@ -79,16 +79,16 @@ def test_parse_json_tolerates_fences_and_thinking():
 def test_falls_back_through_response_formats(monkeypatch):
     seen = []
 
-    def fake(model, messages, response_format=None, max_tokens=16000):
+    def fake(model, messages, response_format=None, **kw):
         seen.append(response_format)
         js = response_format.get("json_schema") or {}
-        if response_format["type"] == "json_schema" and "schema" not in js:
-            raise llm.LLMError("HTTP 400: bad json_schema")  # only accepts the OpenAI-style wrapper
+        if response_format["type"] == "json_schema" and "schema" in js:
+            raise llm.LLMError("HTTP 400: bad json_schema")  # only accepts the bare schema
         return reply([item(i, False) for i in range(len(NOTAMS))])
 
     monkeypatch.setattr(llm, "chat", fake)
     monkeypatch.setattr(llm, "FORMAT_OK", {})
     assert all(x["assessed"] for x in llm.assess("m", "F", "", NOTAMS)["items"])
-    assert "schema" in seen[1]["json_schema"] and llm.FORMAT_OK["m"] == 1
+    assert "schema" not in seen[1]["json_schema"] and llm.FORMAT_OK["m"] == 1
     llm.assess("m", "F", "", NOTAMS)
     assert len(seen) == 3  # the second briefing goes straight to the working format

@@ -84,8 +84,9 @@ def _location(n):
 
 def brief(dep, dest, *, via=(), alternate=None, dep_time=None, window=None, alt_ft=3000, path=None,
           route_note=None, model=None, source="live", use_prefilter=True, with_weather=True, chunk_size=80,
-          band_fl=None, corridor_nm=10):
+          band_fl=None, corridor_nm=10, reasoning=None):
     model = model or config.DEFAULT_MODEL
+    reasoning = reasoning or config.REASONING_EFFORT  # "none", "default", "low", "medium" or "high"
     t0 = time.perf_counter()
     notams, bulletins = ingest.load(source)
     f = make_flight(dep, dest, via=via, alternate=alternate, dep_time=dep_time, window=window, alt_ft=alt_ft,
@@ -94,7 +95,8 @@ def brief(dep, dest, *, via=(), alternate=None, dep_time=None, window=None, alt_
     cands = prefilter.candidates(notams, f) if use_prefilter else national
     t_filter = time.perf_counter() - t0
     wx = weather.for_flight(f) if with_weather else {"stations": [], "text": ""}
-    res = llm.assess(model, flight_block(f, route_note), wx["text"], cands, chunk_size=chunk_size)
+    res = llm.assess(model, flight_block(f, route_note), wx["text"], cands, chunk_size=chunk_size,
+                     reasoning_effort=None if reasoning == "default" else reasoning)
 
     items = []
     for i, (n, r) in enumerate(zip(cands, res["items"])):
@@ -117,8 +119,8 @@ def brief(dep, dest, *, via=(), alternate=None, dep_time=None, window=None, alt_
         "relevant": relevant,
         "unassessed": [x for x in items if not x["assessed"]],
         "not_relevant": [x for x in items if x["assessed"] and not x["relevant"]],
-        "model": {"id": model, "usage": res["usage"], "cost_usd": res["cost_usd"], "latency_s": round(res["latency_s"], 2),
-                  "calls": res["calls"], "errors": res["errors"]},
+        "model": {"id": model, "reasoning": reasoning, "usage": res["usage"], "cost_usd": res["cost_usd"],
+                  "latency_s": round(res["latency_s"], 2), "calls": res["calls"], "errors": res["errors"]},
         "timing": {"filter_s": round(t_filter, 2), "total_s": round(time.perf_counter() - t0, 2)},
     }
 
@@ -134,9 +136,10 @@ def main():
     ap.add_argument("--model")
     ap.add_argument("--source", default="live", help="'live' or a snapshot name such as 2026-09-22")
     ap.add_argument("--no-prefilter", action="store_true")
+    ap.add_argument("--reasoning", help="none (default), default, low, medium or high")
     a = ap.parse_args()
     out = brief(a.dep, a.dest, via=a.via, alternate=a.alternate, dep_time=a.time, alt_ft=a.alt, model=a.model,
-                source=a.source, use_prefilter=not a.no_prefilter)
+                source=a.source, use_prefilter=not a.no_prefilter, reasoning=a.reasoning)
     print(json.dumps(out, indent=1, default=str))
 
 

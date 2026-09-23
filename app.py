@@ -25,6 +25,7 @@ class BriefRequest(BaseModel):
     model: str = ""
     source: str = "live"             # 'live' or a snapshot name
     prefilter: bool = True
+    reasoning: bool = False          # let the model think first (slower); off sends reasoning_effort "none"
     preset: Optional[int] = None     # a labelled test route: use its exact path (and, on a snapshot, its window)
 
 
@@ -56,7 +57,7 @@ def models():
 @app.post("/api/brief")
 def brief(req: BriefRequest):
     kw = dict(via=req.via.split(), alternate=req.alternate or None, alt_ft=req.alt_ft, model=req.model or None,
-              source=req.source or "live", use_prefilter=req.prefilter)
+              source=req.source or "live", use_prefilter=req.prefilter, reasoning="default" if req.reasoning else None)
     if req.preset:
         cfg = pipeline.eval_routes()
         route = next((r for r in cfg["routes"] if r["id"] == req.preset), None)

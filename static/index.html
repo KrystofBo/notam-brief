@@ -109,6 +109,7 @@ details summary{cursor:pointer;color:var(--mut);font-weight:600}
   <div class="actions">
     <button class="go" id="go" type="submit">Get briefing</button>
     <label class="toggle"><input type="checkbox" id="prefilter" checked> Route pre-filter</label>
+    <label class="toggle"><input type="checkbox" id="reasoning"> Model reasoning (slower)</label>
     <span id="status"></span>
   </div>
   <datalist id="ads"></datalist>
@@ -167,7 +168,7 @@ $("#f").addEventListener("submit", async e => {
     dep: $("#dep").value.trim().toUpperCase(), dest: $("#dest").value.trim().toUpperCase(),
     via: $("#via").value.trim(), alternate: $("#alternate").value.trim().toUpperCase(),
     dep_time: $("#time").value, alt_ft: +$("#alt").value || 3000, model: $("#model").value,
-    source: $("#source").value, prefilter: $("#prefilter").checked, preset,
+    source: $("#source").value, prefilter: $("#prefilter").checked, reasoning: $("#reasoning").checked, preset,
   };
   const go = $("#go"); go.disabled = true;
   const t0 = Date.now();
@@ -234,7 +235,7 @@ function render(d) {
   }
   const u = m.usage, cost = m.cost_usd == null ? "n/a" : "$" + m.cost_usd.toFixed(m.cost_usd < 0.01 ? 5 : 4);
   h += `<div class="card foot">
-    <div><b>Model</b>${esc(m.id)}</div>
+    <div><b>Model</b>${esc(m.id)}${m.reasoning && m.reasoning !== "none" ? " (reasoning on)" : ""}</div>
     <div><b>Tokens in / out</b>${u.prompt_tokens.toLocaleString()} / ${u.completion_tokens.toLocaleString()}</div>
     <div><b>Cost</b>${cost}</div>
     <div><b>Model latency</b>${m.latency_s} s${m.calls > 1 ? ` (${m.calls} calls)` : ""}</div>

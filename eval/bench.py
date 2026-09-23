@@ -2,6 +2,8 @@
 
     python -m eval.bench                                          # default model, pre-filter on
     python -m eval.bench --models deepseek-ai/DeepSeek-V4-Flash-0731 other/model --modes prefilter full
+    python -m eval.bench --reasoning none default                # reasoning off vs the model's default
+    python -m eval.bench --combine eval/results/A eval/results/B   # one summary for several runs
 
 Writes eval/results/<utc-stamp>/: one JSON per run, summary.csv and summary.md.
 Recall is the metric that matters: a missed relevant NOTAM is the real failure.
@@ -12,7 +14,9 @@ import json
 import re
 import traceback
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from pathlib import Path
 
 from briefing import config, pipeline
 
@@ -60,12 +64,12 @@ def summarise(rows):
     groups = defaultdict(list)
     for r in rows:
         if "error" not in r:
-            groups[(r["model"], r["mode"])].append(r)
+            groups[(r["model"], r["mode"], r["reasoning"])].append(r)
     agg = []
-    for (model, mode), rs in groups.items():
+    for (model, mode, reasoning), rs in groups.items():
         labelled, flagged, tp = (sum(r[k] for r in rs) for k in ("labelled", "flagged", "tp"))
         costs = [r["cost_usd"] for r in rs if r["cost_usd"] is not None]
-        agg.append({"model": model, "mode": mode, "routes": len(rs),
+        agg.append({"model": model, "mode": mode, "reasoning": reasoning, "routes": len(rs),
                     "recall": tp / labelled if labelled else None, "precision": tp / flagged if flagged else None,
                     "items_to_read": flagged / len(rs), "sent_to_model": sum(r["sent"] for r in rs) / len(rs),
                     "tokens_in": sum(r["tokens_in"] for r in rs) / len(rs),
@@ -76,30 +80,32 @@ def summarise(rows):
 
 
 def write(outdir, rows):
-    cols = ["model", "mode", "route", "labelled", "flagged", "tp", "recall", "precision", "high_recall", "priority_match",
-            "sent", "tokens_in", "tokens_out", "cost_usd", "latency_s", "calls", "unassessed", "missed", "false_pos",
-            "unlabelled_flagged", "error"]
+    cols = ["model", "mode", "reasoning", "route", "labelled", "flagged", "tp", "recall", "precision", "high_recall",
+            "priority_match", "sent", "tokens_in", "tokens_out", "cost_usd", "latency_s", "calls", "unassessed", "missed",
+            "false_pos", "unlabelled_flagged", "error"]
     with open(outdir / "summary.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
     agg = summarise(rows)
+    on_off = lambda mode: "on" if mode == "prefilter" else "off"
     md = ["# Benchmark results", "", f"Snapshot `{pipeline.eval_routes()['snapshot']}`, labels `eval/labels_flat.csv`. "
-          "Recall and precision are pooled over routes; the other columns are means per briefing.", "",
-          "| Model | Pre-filter | Recall | Precision | Items to read | NOTAMs sent | Tokens in | Tokens out | Cost / briefing | Latency |",
-          "|---|---|---|---|---|---|---|---|---|---|"]
+          "Recall and precision are pooled over routes; the other columns are means per briefing. Latency is the "
+          "model stage only.", "",
+          "| Model | Pre-filter | Reasoning | Recall | Precision | Items to read | NOTAMs sent | Tokens in | Tokens out | Cost / briefing | Latency |",
+          "|---|---|---|---|---|---|---|---|---|---|---|"]
     for a in agg:
-        md.append(f"| {a['model']} | {'on' if a['mode'] == 'prefilter' else 'off'} | {fmt(a['recall'], 1)} | "
+        md.append(f"| {a['model']} | {on_off(a['mode'])} | {a['reasoning']} | {fmt(a['recall'], 1)} | "
                   f"{fmt(a['precision'], 1)} | {a['items_to_read']:.1f} | {a['sent_to_model']:.0f} | {a['tokens_in']:,.0f} | "
                   f"{a['tokens_out']:,.0f} | {'$' + fmt(a['cost_usd']) if a['cost_usd'] is not None else '-'} | {a['latency_s']:.1f} s |")
     md += ["", "## Per route", "",
-           "| Model | Pre-filter | Route | Recall | Precision | Flagged / labelled | Missed | False positives | Tokens in/out | Cost | Latency |",
-           "|---|---|---|---|---|---|---|---|---|---|---|"]
+           "| Model | Pre-filter | Reasoning | Route | Recall | Precision | Flagged / labelled | Missed | False positives | Tokens in/out | Cost | Latency |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         if "error" in r:
-            md.append(f"| {r['model']} | {r['mode']} | {r['route']} | error: {r['error'][:80]} |||||||||")
+            md.append(f"| {r['model']} | {on_off(r['mode'])} | {r['reasoning']} | {r['route']} | error: {r['error'][:80]} ||||||||")
             continue
-        md.append(f"| {r['model'].split('/')[-1]} | {'on' if r['mode'] == 'prefilter' else 'off'} | {r['route']} | "
+        md.append(f"| {r['model'].split('/')[-1]} | {on_off(r['mode'])} | {r['reasoning']} | {r['route']} | "
                   f"{fmt(r['recall'], 1)} | {fmt(r['precision'], 1)} | {r['flagged']} / {r['labelled']} | "
                   f"{r['missed'] or '-'} | {r['false_pos'] or '-'} | {r['tokens_in']:,} / {r['tokens_out']:,} | "
                   f"{'$' + fmt(r['cost_usd']) if r['cost_usd'] is not None else '-'} | {r['latency_s']:.1f} s |")
@@ -110,46 +116,76 @@ def write(outdir, rows):
     return text
 
 
+NUMERIC = {"route": int, "labelled": int, "flagged": int, "tp": int, "recall": float, "precision": float,
+           "high_recall": float, "priority_match": float, "sent": int, "tokens_in": int, "tokens_out": int,
+           "cost_usd": float, "latency_s": float, "calls": int, "unassessed": int}
+
+
+def load_rows(d):
+    rows = []
+    with open(Path(d) / "summary.csv", encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            for k, cast in NUMERIC.items():
+                if k in r:
+                    r[k] = cast(r[k]) if r[k] != "" else None
+            if not r.get("error"):
+                r.pop("error", None)
+            rows.append(r)
+    return rows
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--combine", nargs="+", metavar="DIR", help="merge earlier result folders into one summary")
     ap.add_argument("--models", nargs="+", default=[config.DEFAULT_MODEL])
     ap.add_argument("--modes", nargs="+", default=["prefilter"], choices=["prefilter", "full"])
     ap.add_argument("--routes", nargs="+", type=int, default=[1, 2, 3, 4, 5])
     ap.add_argument("--weather", action="store_true", help="include live METAR/TAF (off by default: not reproducible)")
     ap.add_argument("--chunk", type=int, default=80, help="NOTAMs per model request")
+    ap.add_argument("--reasoning", nargs="+", default=[config.REASONING_EFFORT],
+                    help="reasoning_effort values to compare, e.g. none default")
+    ap.add_argument("--parallel", type=int, default=5, help="briefings run at once (use 1 for --modes full)")
     a = ap.parse_args()
 
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    if a.combine:
+        outdir = RESULTS / f"{stamp}-combined"
+        outdir.mkdir(parents=True)
+        print(write(outdir, [r for d in a.combine for r in load_rows(d)]))
+        return
     cfg, labels = pipeline.eval_routes(), load_labels()
-    outdir = RESULTS / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    outdir = RESULTS / stamp
     outdir.mkdir(parents=True)
-    rows = []
-    for model in a.models:
-        for mode in a.modes:
-            for r in (r for r in cfg["routes"] if r["id"] in a.routes):
-                base = {"model": model, "mode": mode, "route": r["id"]}
-                try:
-                    out = pipeline.brief(r["dep"], r["dest"], path=r["path"], route_note=r.get("note"),
-                                         window=cfg["window"], band_fl=tuple(cfg["band_fl"]),
-                                         corridor_nm=cfg["corridor_nm"], alt_ft=cfg["alt_ft"], model=model,
-                                         source=cfg["snapshot"], use_prefilter=mode == "prefilter",
-                                         with_weather=a.weather, chunk_size=a.chunk)
-                except Exception as e:
-                    traceback.print_exc()
-                    rows.append(dict(base, error=str(e)))
-                    continue
-                s = score(out, labels[r["id"]])
-                m = out["model"]
-                row = dict(base, **{k: (" ".join(v) if isinstance(v, list) else v) for k, v in s.items()},
-                           sent=out["counts"]["candidates"], tokens_in=m["usage"]["prompt_tokens"],
-                           tokens_out=m["usage"]["completion_tokens"], cost_usd=m["cost_usd"],
-                           latency_s=m["latency_s"], calls=m["calls"])
-                rows.append(row)
-                (outdir / f"{slug(model)}_{mode}_route{r['id']}.json").write_text(
-                    json.dumps(dict(out, score=s), indent=1, default=str), encoding="utf-8")
-                print(f"{slug(model):28} {mode:9} route {r['id']}: recall {fmt(row['recall'], 1):>4} "
-                      f"precision {fmt(row['precision'], 1):>4} flagged {row['flagged']:>2}/{row['labelled']} "
-                      f"missed [{row['missed']}] tokens {row['tokens_in']}/{row['tokens_out']} "
-                      f"{m['latency_s']:.1f}s")
+    jobs = [(model, mode, reasoning, r) for model in a.models for mode in a.modes for reasoning in a.reasoning
+            for r in cfg["routes"] if r["id"] in a.routes]
+
+    def run(job):
+        model, mode, reasoning, r = job
+        base = {"model": model, "mode": mode, "reasoning": reasoning, "route": r["id"]}
+        try:
+            out = pipeline.brief(r["dep"], r["dest"], path=r["path"], route_note=r.get("note"),
+                                 window=cfg["window"], band_fl=tuple(cfg["band_fl"]), corridor_nm=cfg["corridor_nm"],
+                                 alt_ft=cfg["alt_ft"], model=model, source=cfg["snapshot"],
+                                 use_prefilter=mode == "prefilter", with_weather=a.weather, chunk_size=a.chunk,
+                                 reasoning=reasoning)
+        except Exception as e:
+            traceback.print_exc()
+            return dict(base, error=str(e))
+        s = score(out, labels[r["id"]])
+        m = out["model"]
+        row = dict(base, **{k: (" ".join(v) if isinstance(v, list) else v) for k, v in s.items()},
+                   sent=out["counts"]["candidates"], tokens_in=m["usage"]["prompt_tokens"],
+                   tokens_out=m["usage"]["completion_tokens"], cost_usd=m["cost_usd"],
+                   latency_s=m["latency_s"], calls=m["calls"])
+        (outdir / f"{slug(model)}_{mode}_{reasoning}_route{r['id']}.json").write_text(
+            json.dumps(dict(out, score=s), indent=1, default=str), encoding="utf-8")
+        print(f"{slug(model):28} {mode:9} {reasoning:7} route {r['id']}: recall {fmt(row['recall'], 1):>4} "
+              f"precision {fmt(row['precision'], 1):>4} flagged {row['flagged']:>2}/{row['labelled']} "
+              f"missed [{row['missed']}] tokens {row['tokens_in']}/{row['tokens_out']} {m['latency_s']:.1f}s", flush=True)
+        return row
+
+    with ThreadPoolExecutor(max_workers=max(1, a.parallel)) as pool:
+        rows = list(pool.map(run, jobs))
     print()
     print(write(outdir, rows))
     print(f"results in {outdir}")
