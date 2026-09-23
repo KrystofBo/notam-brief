@@ -12,7 +12,7 @@ not an authority: the pilot in command makes the final decision.
 ```bash
 conda env create -f environment.yml
 conda activate notam
-copy .env.example .env            # then put your Nebius Token Factory key in .env
+copy .env.example .env            # then put your Nebius Token Factory key (and ElevenLabs key) in .env
 uvicorn app:app --port 8765
 ```
 
@@ -69,6 +69,15 @@ flowchart LR
 5. **Output** ([app.py](app.py), [static/index.html](static/index.html)): weather at the top, then the
    ranked items with the original ICAO text beside each one, then the NOTAMs judged not relevant with the
    reasons.
+6. **Voice summary** ([briefing/voice.py](briefing/voice.py), [prompts/voice_prompt.md](prompts/voice_prompt.md)):
+   the **Listen** button sends the HIGH and MEDIUM items to the same model. The model turns them into a short
+   spoken brief: facts only, similar items grouped, and no ids, coordinates or advice. ElevenLabs then reads
+   the brief aloud and the page shows the transcript.
+   - Every number in a spoken sentence must appear in the summaries that sentence came from. If it doesn't,
+     the summaries themselves are read instead. The same applies to any item the model leaves out.
+   - On the five test routes the spoken brief is 27-127 words, against 97-334 words in the written summaries.
+   - The model takes about 2.5 s and ElevenLabs about 5-7 s.
+   - Needs `ELEVENLABS_API_KEY` in `.env`.
 
 ## Results so far
 
@@ -137,14 +146,16 @@ produces exactly the labelled candidate sets.
 - **Model:** [Nebius Token Factory](https://tokenfactory.nebius.com/), an OpenAI-compatible API
   (`https://api.tokenfactory.nebius.com/v1`). Set `NEBIUS_API_KEY` in `.env`. On Windows a key set with
   `setx` is also picked up.
+- **Voice:** [ElevenLabs text-to-speech](https://elevenlabs.io/docs/api-reference/text-to-speech/convert) with
+  the `eleven_multilingual_v2` model.
 
 ## Layout
 
 ```
 app.py                  FastAPI demo server
 static/index.html       demo UI
-briefing/               ingest, prefilter, weather, llm, pipeline
-prompts/system_prompt.md
+briefing/               ingest, prefilter, weather, llm, pipeline, voice
+prompts/                system_prompt.md, voice_prompt.md
 eval/                   routes, labels, benchmark, results
 data/snapshots/         frozen bulletins used for evaluation
 data/aerodromes.csv     aerodrome coordinates

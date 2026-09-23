@@ -2,6 +2,7 @@
 
     uvicorn app:app --port 8765
 """
+import base64
 from pathlib import Path
 from typing import Optional
 
@@ -9,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from briefing import aerodromes, config, ingest, llm, pipeline
+from briefing import aerodromes, config, ingest, llm, pipeline, voice
 
 STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="VFR NOTAM briefing")
@@ -27,6 +28,12 @@ class BriefRequest(BaseModel):
     prefilter: bool = True
     reasoning: bool = False          # let the model think first (slower); off sends reasoning_effort "none"
     preset: Optional[int] = None     # a labelled test route: use its exact path (and, on a snapshot, its window)
+
+
+class VoiceRequest(BaseModel):
+    flight: dict                     # the briefing's flight
+    items: list                      # the briefing's relevant items; only HIGH and MEDIUM are read out
+    unassessed: int = 0
 
 
 @app.get("/")
@@ -75,3 +82,15 @@ def brief(req: BriefRequest):
         raise HTTPException(502, f"Model call failed: {e}")
     except RuntimeError as e:
         raise HTTPException(500, str(e))
+
+
+@app.post("/api/voice")
+def voice_summary(req: VoiceRequest):
+    try:
+        text = voice.script(req.flight, req.items, req.unassessed)
+        audio = voice.speak(text)
+    except llm.LLMError as e:
+        raise HTTPException(502, f"Model call failed: {e}")
+    except RuntimeError as e:
+        raise HTTPException(500, str(e))
+    return {"script": text, "audio": base64.b64encode(audio).decode()}

@@ -53,6 +53,8 @@ button.go:disabled{opacity:.6;cursor:progress}
 .pill{font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:4px}
 .p-high{--c:var(--hi);--cb:var(--hi-bg)}.p-medium{--c:var(--me);--cb:var(--me-bg)}.p-low{--c:var(--lo);--cb:var(--lo-bg)}
 .pill{background:var(--cb);color:var(--c)}
+.voice{padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.voice audio{height:34px}.voice p{flex-basis:100%;margin:0}
 .wx{padding:14px 16px;margin-bottom:16px}
 .wx h3,.sec h3{font-size:14px;margin:0 0 6px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
 .wx p{margin:0 0 10px}
@@ -215,7 +217,9 @@ function render(d) {
       <div class="card stat"><div class="n">${c.candidates}</div><div class="l">${d.prefilter ? "near your route, altitude and time" : "sent to the model (pre-filter off)"}</div></div>
       <div class="card stat key"><div class="n">${c.relevant}</div><div class="l">affect this flight</div>
         <div class="pris">${["HIGH", "MEDIUM", "LOW"].map(k => pc(k) ? `<span class="pill p-${k.toLowerCase()}">${pc(k)} ${k}</span>` : "").join("")}</div></div>
-    </div>`;
+    </div>
+    <section class="card voice"><button type="button" class="chip" id="listen">Listen to the high and medium items</button>
+      <span id="vstatus" class="small"></span><audio id="player" controls hidden></audio><p id="vscript" class="small" hidden></p></section>`;
   const wx = d.weather;
   if (wx.summary || wx.stations.length || wx.error) {
     h += `<section class="card wx"><h3>Weather</h3>${wx.summary ? `<p>${esc(wx.summary)}</p>` : ""}
@@ -247,6 +251,25 @@ function render(d) {
   </div>${m.errors.length ? `<p class="small">Model notes: ${esc(m.errors.join("; "))}</p>` : ""}
   <p class="small">The bulletins are EAD-derived and not official documents. Always read the original NOTAMs; the pilot in command makes the final decision.</p>`;
   $("#out").innerHTML = h;
+  $("#listen").onclick = () => listen(d);
+}
+
+async function listen(d) {
+  const a = $("#player");
+  if (a.src) return a.play();
+  const btn = $("#listen"); btn.disabled = true;
+  $("#vstatus").innerHTML = `<span class="spin"></span>Writing and recording the summary…`;
+  try {
+    const r = await fetch("/api/voice", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({flight: d.flight, items: d.relevant, unassessed: d.unassessed.length})});
+    const v = await r.json();
+    if (!r.ok) throw new Error(v.detail || r.statusText);
+    a.src = "data:audio/mpeg;base64," + v.audio; a.hidden = false; a.play().catch(() => {});
+    $("#vscript").textContent = v.script; $("#vscript").hidden = false;
+    $("#vstatus").textContent = "";
+  } catch (err) {
+    $("#vstatus").textContent = `Voice summary failed: ${err.message}`;
+  } finally { btn.disabled = false; }
 }
 init();
 </script>
