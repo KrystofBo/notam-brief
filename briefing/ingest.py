@@ -25,6 +25,7 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml",
     "Accept-Language": "en-US,en;q=0.9",
 }
+_PARSED = {}  # file path -> ((mtime, size), parse() result); re-parsed when the file changes
 TOKENS = re.compile(r"<h([234])[^>]*>(.*?)</h\1>|<table style=\"width: 100%;background-color:#d69fac\" >(.*?)</table>", re.S)
 SECTIONS = ("En-Route Information", "Nav Warnings", "Aerodromes")
 
@@ -37,17 +38,17 @@ def _decode(raw):
 
 
 def fetch(country, max_age_s=3 * 3600):
-    """Live bulletin HTML for NL or DE, cached for a few hours (the source refreshes daily)."""
+    """Path of the live bulletin HTML for NL or DE, downloaded again after a few hours (the source refreshes daily)."""
     CACHE.mkdir(parents=True, exist_ok=True)
     path = CACHE / f"{country.lower()}_pib.html"
     if path.exists() and time.time() - path.stat().st_mtime < max_age_s:
-        return _decode(path.read_bytes())
+        return path
     r = requests.get(URL.format(COUNTRIES[country]), headers=HEADERS, timeout=60)
     r.raise_for_status()
     if b"Pre-flight Information Bulletin" not in r.content:
         raise RuntimeError(f"notaminfo.com returned no bulletin for {country} (blocked?)")
     path.write_bytes(r.content)
-    return _decode(r.content)
+    return path
 
 
 def _clean(s):
@@ -117,17 +118,22 @@ def parse(text, country):
 
 
 def load(source="live"):
-    """NL + DE NOTAMs, de-duplicated. source is 'live', a snapshot name (e.g. '2026-09-22') or a directory."""
+    """NL + DE NOTAMs, de-duplicated. source is 'live', a snapshot name (e.g. '2026-09-22') or a directory.
+
+    Each bulletin file is parsed once and kept in memory until the file changes."""
     notams, bulletins, seen = [], [], set()
     for country in COUNTRIES:
         if source == "live":
-            text = fetch(country)
+            path = fetch(country)
         else:
             d = Path(source) if Path(source).is_dir() else SNAPSHOTS / source
-            text = _decode((d / f"{country.lower()}_pib.html").read_bytes())
-        meta, items = parse(text, country)
-        meta["count"] = len(items)
-        bulletins.append(meta)
+            path = d / f"{country.lower()}_pib.html"
+        st, key = path.stat(), str(path.resolve())
+        stamp = (st.st_mtime_ns, st.st_size)
+        if _PARSED.get(key, (None,))[0] != stamp:
+            _PARSED[key] = (stamp, parse(_decode(path.read_bytes()), country))
+        meta, items = _PARSED[key][1]
+        bulletins.append(dict(meta, count=len(items)))
         for n in items:
             if n["id"] not in seen:
                 seen.add(n["id"])

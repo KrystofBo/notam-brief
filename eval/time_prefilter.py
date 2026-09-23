@@ -30,7 +30,10 @@ def main():
     a = ap.parse_args()
     cfg = eval_routes()
 
-    (notams, bulletins), parse_med, parse_p95 = bench(lambda: ingest.load(cfg["snapshot"]), max(10, a.repeat // 20))
+    snap = config.SNAPSHOTS / cfg["snapshot"]
+    texts = {c: ingest._decode((snap / f"{c.lower()}_pib.html").read_bytes()) for c in ingest.COUNTRIES}
+    _, parse_med, parse_p95 = bench(lambda: [ingest.parse(t, c) for c, t in texts.items()], max(10, a.repeat // 20))
+    (notams, bulletins), load_med, load_p95 = bench(lambda: ingest.load(cfg["snapshot"]), a.repeat)
     rows = []
     for r in cfg["routes"]:
         f = make_flight(r["dep"], r["dest"], path=r["path"], window=cfg["window"], alt_ft=cfg["alt_ft"],
@@ -49,8 +52,9 @@ def main():
              f"Snapshot `{cfg['snapshot']}`: {len(notams)} NOTAMs (NL + DE). {a.repeat} runs per route. "
              f"{platform.python_implementation()} {platform.python_version()} on {platform.system()} "
              f"{platform.machine()} ({platform.processor() or 'unknown CPU'}).", "",
-             f"Parsing both bulletin HTML files (done once per bulletin refresh, then cached): "
-             f"median {parse_med:.1f} ms, p95 {parse_p95:.1f} ms.", "",
+             f"Parsing both bulletin HTML files, done once each time a bulletin file changes: "
+             f"median {parse_med:.1f} ms, p95 {parse_p95:.1f} ms. Loading the parsed bulletins from memory on each "
+             f"request: median {load_med:.2f} ms, p95 {load_p95:.2f} ms.", "",
              "| Route | NOTAMs scanned | Kept | Median | p95 | Per NOTAM |", "|---|---|---|---|---|---|"]
     for r, n_in, n_out, med, p95 in rows:
         lines.append(f"| {r['id']} {r['name']} | {n_in} | {n_out} | {med:.2f} ms | {p95:.2f} ms | "
