@@ -1,17 +1,35 @@
 # NOTAM Brief
 
-Route-specific NOTAM and weather briefing for VFR pilots in the Netherlands and Germany.
+Before every flight, a pilot has to check the NOTAMs. These are short official notices about temporary hazards and
+changes, such as:
+- a closed runway
+- a crane next to an airfield
+- parachute jumping or a military exercise
+- a radio frequency that is out of service
+
+They are written in an abbreviated code and published country by country. For a short flight inside the
+Netherlands, that means reading the whole Dutch bulletin: 132 NOTAMs in our test snapshot. The German bulletin
+has about 800 more. Usually only about eight of them affect the flight. Finding those few is slow, and missing one
+is a safety risk.
+
+NOTAM Brief does that sorting for private pilots who fly by sight (VFR, visual flight rules) in the Netherlands and
+Germany.
+- You enter your departure, destination and time.
+- It keeps only the NOTAMs that affect that flight, ranks them by importance, and explains each one in plain
+  English next to the original text.
+- It also summarises the weather and can read out a short spoken briefing.
+
+It supports the pilot's decision; the pilot in command still makes it.
+
+## About this project
 
 A one-person sprint project for the AI Innovate Amsterdam hackathon (September 2026). It is a small working
-prototype, not a finished product. The scope is kept narrow on purpose:
-- VFR flights in the Netherlands and Germany
-- five labelled test routes, with draft labels that a pilot still has to check
-- an unofficial NOTAM source
+prototype, not a finished or certified product.
 
-The pilot enters departure, destination and planned time. The system takes the complete national NOTAM set
-(a few hundred items for NL, about 800 for DE), keeps only what affects that flight, ranks it by operational
-importance, and explains each item in plain language next to the original ICAO text. It is decision support,
-not an authority: the pilot in command makes the final decision.
+- It works for any flight between aerodromes in the Netherlands and Germany, optionally via waypoints.
+- Five test routes are used to measure how accurate it is. The expected answers for those routes are drafts that
+  a pilot still has to check.
+- The NOTAMs come from a free, unofficial copy of the official bulletins, not from the official source.
 
 ## Quick start
 
