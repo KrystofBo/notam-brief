@@ -133,8 +133,13 @@ def phraseology(text):
                   lambda m: f"{_amount(m[1])} {ONE[UNITS[m[2]]] if m[1] == '1' else UNITS[m[2]]}", t)
 
 
+MAX_CHARS = 5000  # about five minutes of speech; the longest test-route brief is about 1,000 characters
+
+
 def speak(text):
     """MP3 of the text, read by ElevenLabs."""
+    if len(text) > MAX_CHARS:  # caps what one request can spend on ElevenLabs
+        raise ValueError(f"The spoken summary is {len(text)} characters; the limit is {MAX_CHARS}.")
     r = requests.post(f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
                       headers={"xi-api-key": config.env("ELEVENLABS_API_KEY")},
                       json={"text": text, "model_id": VOICE_MODEL, "voice_settings": VOICE_SETTINGS}, timeout=120)

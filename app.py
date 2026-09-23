@@ -12,12 +12,21 @@ from fastapi.responses import FileResponse
 from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from briefing import aerodromes, config, ingest, llm, pipeline, voice
 
 STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="VFR NOTAM briefing")
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    """No framing by other sites (clickjacking) and no content-type sniffing."""
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 def signed_in(authorization: str = Header(default="")):
@@ -63,7 +72,7 @@ class BriefRequest(BaseModel):
 
 class VoiceRequest(BaseModel):
     flight: dict                     # the briefing's flight
-    items: list                      # the briefing's relevant items; only HIGH and MEDIUM are read out
+    items: list = Field(max_length=100)  # the briefing's relevant items; only HIGH and MEDIUM are read out
     unassessed: int = 0
 
 
@@ -102,8 +111,11 @@ def models():
 
 @app.post("/api/brief", dependencies=[Depends(signed_in)])
 def brief(req: BriefRequest):
+    source = req.source or "live"
+    if source != "live" and source not in ingest.snapshots():  # never a path of the caller's choosing
+        raise HTTPException(400, f"Unknown NOTAM data {source!r}: use 'live' or a snapshot name.")
     kw = dict(via=req.via.split(), alternate=req.alternate or None, alt_ft=req.alt_ft, model=req.model or None,
-              source=req.source or "live", use_prefilter=req.prefilter, reasoning="default" if req.reasoning else None)
+              source=source, use_prefilter=req.prefilter, reasoning="default" if req.reasoning else None)
     if req.preset:
         cfg = pipeline.eval_routes()
         route = next((r for r in cfg["routes"] if r["id"] == req.preset), None)
@@ -128,6 +140,8 @@ def voice_summary(req: VoiceRequest):
     try:
         text = voice.phraseology(voice.script(req.flight, req.items, req.unassessed))
         audio = voice.speak(text)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
     except llm.LLMError as e:
         raise HTTPException(502, f"Model call failed: {e}")
     except RuntimeError as e:

@@ -188,6 +188,34 @@ Notes:
 - On Vercel the live bulletins are cached in `/tmp`, the only writable directory.
 - If notaminfo.com blocks Vercel's servers, the snapshot under **Options** still works.
 
+### Security
+
+What protects the deployed app:
+- **Sign-in:** every API call needs a Firebase ID token for a verified Google account in `ALLOWED_EMAILS`. The
+  server checks the token's signature, project, issuer and expiry.
+- **Secrets:** the Nebius and ElevenLabs keys live only in Vercel's environment variables and never reach the
+  browser. The Firebase web `apiKey` is public by design.
+- **Input limits:** the NOTAM data is `live` or a known snapshot, never a path. A voice request takes at most 100
+  items and 5,000 characters of speech.
+- **Browser:**
+  - All NOTAM text and model output is escaped before it is shown.
+  - Other sites can't frame the page.
+  - The map library is pinned with a Subresource Integrity hash.
+  - The token travels as a header, not a cookie, so cross-site request forgery doesn't apply.
+
+Before going live:
+1. Use a fresh Nebius key for production and revoke any key that has been shared, for example in a chat.
+2. Give the ElevenLabs key a character limit in its settings.
+3. Mark both API keys as **Sensitive** in Vercel.
+4. In Google Cloud (**APIs & Services → Credentials**), restrict the Firebase browser key to your Vercel domain
+   and `localhost`.
+5. Enable only the Google provider in Firebase Authentication.
+
+What remains:
+- An allowed user can still spend credits freely, because there is no per-user rate limit.
+- The NOTAM text comes from an unofficial third-party site and goes into the model prompt, so a crafted NOTAM
+  could mislead the ranking. This is one reason the original text is always shown.
+
 ## Data sources and caveats
 
 - **NOTAMs:** [notaminfo.com](https://notaminfo.com/latest?country=Netherlands). These are EAD-derived PIBs,
