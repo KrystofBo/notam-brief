@@ -74,3 +74,21 @@ def test_schema_pins_ids_and_count():
 def test_parse_json_tolerates_fences_and_thinking():
     assert llm.parse_json('<think>hmm</think>\n```json\n{"a": 1}\n```') == {"a": 1}
     assert llm.parse_json('Here you go: {"a": 2} done') == {"a": 2}
+
+
+def test_falls_back_through_response_formats(monkeypatch):
+    seen = []
+
+    def fake(model, messages, response_format=None, max_tokens=16000):
+        seen.append(response_format)
+        js = response_format.get("json_schema") or {}
+        if response_format["type"] == "json_schema" and "schema" not in js:
+            raise llm.LLMError("HTTP 400: bad json_schema")  # only accepts the OpenAI-style wrapper
+        return reply([item(i, False) for i in range(len(NOTAMS))])
+
+    monkeypatch.setattr(llm, "chat", fake)
+    monkeypatch.setattr(llm, "FORMAT_OK", {})
+    assert all(x["assessed"] for x in llm.assess("m", "F", "", NOTAMS)["items"])
+    assert "schema" in seen[1]["json_schema"] and llm.FORMAT_OK["m"] == 1
+    llm.assess("m", "F", "", NOTAMS)
+    assert len(seen) == 3  # the second briefing goes straight to the working format

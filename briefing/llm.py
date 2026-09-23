@@ -85,16 +85,36 @@ def user_message(flight_block, weather_text, notams, weather_here=True):
     return f"FLIGHT\n{flight_block}\n\nWEATHER\n{wx}\n\nNOTAMS ({len(notams)} items)\n{body}"
 
 
+FORMAT_OK = {}  # model -> index into _formats() of the first response_format the model accepted
+
+
+def _formats(ids):
+    s = schema(ids)
+    return [{"type": "json_schema", "json_schema": s},  # Token Factory docs: the bare schema
+            {"type": "json_schema", "json_schema": {"name": "briefing", "schema": s, "strict": True}},  # OpenAI style
+            {"type": "json_object"}]  # no schema support: the prompt carries the contract
+
+
+def _chat_json(model, msgs, ids):
+    fmts, err = _formats(ids), None
+    for i in range(FORMAT_OK.get(model, 0), len(fmts)):
+        try:
+            res = chat(model, msgs, fmts[i])
+        except LLMError as e:
+            if not str(e).startswith(("HTTP 400", "HTTP 422")):
+                raise
+            err = e
+            continue
+        FORMAT_OK[model] = i
+        return res
+    raise err
+
+
 def _assess_chunk(model, flight_block, weather_text, chunk, weather_here, depth=0):
     ids = [n["id"] for n in chunk]
     msgs = [{"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_message(flight_block, weather_text, chunk, weather_here)}]
-    try:
-        res = chat(model, msgs, {"type": "json_schema", "json_schema": schema(ids)})
-    except LLMError as e:
-        if not str(e).startswith(("HTTP 400", "HTTP 422")):
-            raise
-        res = chat(model, msgs, {"type": "json_object"})  # model without json_schema support
+    res = _chat_json(model, msgs, ids)
     calls, errors = [res], []
     try:
         out = parse_json(res["content"])
