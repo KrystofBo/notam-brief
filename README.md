@@ -59,6 +59,27 @@ flowchart LR
    ranked items with the original ICAO text beside each one, then the NOTAMs judged not relevant with the
    reasons.
 
+## Results so far
+
+DeepSeek-V4-Flash-0731 on Nebius Token Factory, on the five labelled routes (snapshot 2026-09-22).
+The full table is in [eval/results/latest.md](eval/results/latest.md).
+
+| Pre-filter | Reasoning | Recall | Precision | Items to read | NOTAMs sent | Cost / briefing | Model latency |
+|---|---|---|---|---|---|---|---|
+| on | off | **100%** | 63% | 7.6 | 30 | **$0.0014** | 14 s |
+| on | on | 96% | 79% | 5.8 | 30 | $0.0024 | 39 s |
+| off | off | 75% | 47% | 7.6 | 457 | $0.0167 | 36 s |
+
+- With the pre-filter and reasoning off, the model caught every labelled NOTAM. The pilot reads about 8 items
+  instead of 132 (NL) or 945 (NL + DE), at well under a cent per briefing.
+- Without the pre-filter, recall falls to 75%. On the cross-border route 4 the model missed all five wind farms
+  near the track, and it cost 12 times as much. The geometric pre-filter does work the model cannot do reliably
+  from raw coordinates.
+- Turning reasoning on makes the output shorter, but it is 3 times slower and missed one LOW item.
+  Reasoning is off by default (`BRIEFING_REASONING_EFFORT`).
+
+These results are measured against **draft labels** that still need to be checked by a pilot (issue #1).
+
 ## Evaluation
 
 | File | What it is |
