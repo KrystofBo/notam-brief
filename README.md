@@ -21,6 +21,12 @@ Germany.
 
 It supports the pilot's decision; the pilot in command still makes it.
 
+![NOTAM Brief showing a live briefing from Lelystad to Hilversum via Hamburg and Berlin: a route map with the NOTAM areas, the count going from 951 NOTAMs to 158 near the route to 10 that affect the flight, a Listen button, and the first high-priority NOTAM card](docs/screenshot.png)
+
+*A live briefing from Lelystad to Hilversum via Hamburg and Berlin. The Dutch and German bulletins held 951
+NOTAMs, 158 were near the route, height and time, and 10 affect the flight. The weather service timed out on this
+run, and the app says so rather than hiding it.*
+
 ## About this project
 
 A one-person sprint project for the AI Innovate Amsterdam hackathon (September 2026). It is a small working
@@ -268,4 +274,5 @@ eval/                   routes, labels, benchmark, results
 data/snapshots/         frozen bulletins used for evaluation
 data/aerodromes.csv     aerodrome coordinates
 tests/                  snapshot regression tests
+docs/screenshot.png     the screenshot in this README
 ```
