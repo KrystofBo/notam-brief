@@ -10,9 +10,8 @@ not an authority: the pilot in command makes the final decision.
 ## Quick start
 
 ```bash
-python -m venv .venv
-.venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
+conda env create -f environment.yml
+conda activate notam
 copy .env.example .env            # then put your Nebius Token Factory key in .env
 uvicorn app:app --port 8765
 ```
