@@ -3,17 +3,48 @@
     uvicorn app:app --port 8765
 """
 import base64
+import os
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
+from google.auth import exceptions as google_exceptions
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 from pydantic import BaseModel
 
 from briefing import aerodromes, config, ingest, llm, pipeline, voice
 
 STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="VFR NOTAM briefing")
+
+
+def signed_in(authorization: str = Header(default="")):
+    """Email of the signed-in user. With a Firebase project configured (FIREBASE_PROJECT_ID) every API call needs
+    a Firebase ID token for a verified Google account listed in ALLOWED_EMAILS. On Vercel sign-in is always
+    required; locally, without a project, the app stays open."""
+    project = os.environ.get("FIREBASE_PROJECT_ID")
+    if not project:
+        if os.environ.get("VERCEL"):
+            raise HTTPException(503, "Sign-in is not configured: set FIREBASE_PROJECT_ID and FIREBASE_API_KEY.")
+        return None
+    token = authorization.removeprefix("Bearer ").strip()
+    if not token:
+        raise HTTPException(401, "Sign in first.")
+    try:
+        claims = id_token.verify_firebase_token(token, google_requests.Request(), audience=project)
+    except ValueError as e:
+        raise HTTPException(401, f"Your sign-in has expired or is invalid. Sign in again. ({e})")
+    except google_exceptions.GoogleAuthError as e:
+        raise HTTPException(503, f"Could not check your sign-in: {e}")
+    if claims.get("iss") != f"https://securetoken.google.com/{project}":
+        raise HTTPException(401, "This sign-in belongs to another Firebase project.")
+    email = str(claims.get("email") or "").lower()
+    allowed = {e.strip().lower() for e in os.environ.get("ALLOWED_EMAILS", "").split(",") if e.strip()}
+    if not claims.get("email_verified") or email not in allowed:
+        raise HTTPException(403, f"{email or 'This account'} is not on the list of allowed users.")
+    return email
 
 
 class BriefRequest(BaseModel):
@@ -41,7 +72,15 @@ def index():
     return FileResponse(STATIC / "index.html")
 
 
-@app.get("/api/meta")
+@app.get("/api/config")
+def client_config():
+    """Public Firebase web config for the sign-in button; null when sign-in is off."""
+    project = os.environ.get("FIREBASE_PROJECT_ID")
+    return {"firebase": {"apiKey": os.environ.get("FIREBASE_API_KEY"), "authDomain": f"{project}.firebaseapp.com",
+                         "projectId": project} if project else None}
+
+
+@app.get("/api/meta", dependencies=[Depends(signed_in)])
 def meta():
     cfg = pipeline.eval_routes()
     return {
@@ -53,7 +92,7 @@ def meta():
     }
 
 
-@app.get("/api/models")
+@app.get("/api/models", dependencies=[Depends(signed_in)])
 def models():
     try:
         return {"models": sorted(llm.models_info())}
@@ -61,7 +100,7 @@ def models():
         return {"models": [config.DEFAULT_MODEL], "error": str(e)}
 
 
-@app.post("/api/brief")
+@app.post("/api/brief", dependencies=[Depends(signed_in)])
 def brief(req: BriefRequest):
     kw = dict(via=req.via.split(), alternate=req.alternate or None, alt_ft=req.alt_ft, model=req.model or None,
               source=req.source or "live", use_prefilter=req.prefilter, reasoning="default" if req.reasoning else None)
@@ -84,7 +123,7 @@ def brief(req: BriefRequest):
         raise HTTPException(500, str(e))
 
 
-@app.post("/api/voice")
+@app.post("/api/voice", dependencies=[Depends(signed_in)])
 def voice_summary(req: VoiceRequest):
     try:
         text = voice.phraseology(voice.script(req.flight, req.items, req.unassessed))
