@@ -1,6 +1,12 @@
 # NOTAM Brief
 
-Route-specific NOTAM and weather briefing for VFR pilots in the Netherlands and Germany (AI Innovate Amsterdam).
+Route-specific NOTAM and weather briefing for VFR pilots in the Netherlands and Germany.
+
+A one-person sprint project for the AI Innovate Amsterdam hackathon (September 2026). It is a small working
+prototype, not a finished product. The scope is kept narrow on purpose:
+- VFR flights in the Netherlands and Germany
+- five labelled test routes, with draft labels that a pilot still has to check
+- an unofficial NOTAM source
 
 The pilot enters departure, destination and planned time. The system takes the complete national NOTAM set
 (a few hundred items for NL, about 800 for DE), keeps only what affects that flight, ranks it by operational
