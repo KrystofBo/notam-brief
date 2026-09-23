@@ -33,10 +33,13 @@ prototype, not a finished or certified product.
 
 ## Quick start
 
+You need conda (Miniconda is enough) and a [Nebius Token Factory](https://tokenfactory.nebius.com/) API key.
+An ElevenLabs key is only needed for the spoken summary.
+
 ```bash
-conda env create -f environment.yml
+conda env create -f environment.yml   # env already exists? conda env update -f environment.yml
 conda activate notam
-copy .env.example .env            # then put your Nebius Token Factory key (and ElevenLabs key) in .env
+cp .env.example .env                  # Windows: copy .env.example .env; then add your keys to .env
 uvicorn app:app --port 8765
 ```
 
