@@ -8,7 +8,7 @@ from . import aerodromes, config, llm
 PROMPT = (config.PROMPTS / "voice_prompt.md").read_text(encoding="utf-8")
 VOICE_ID = "keLVje3aBMuRpxuu0bqO"
 VOICE_MODEL = "eleven_multilingual_v2"
-VOICE_SETTINGS = {"speed": 1.2, "stability": 0.85}  # fastest allowed (0.7-1.2); steadier than the default 0.5
+VOICE_SETTINGS = {"speed": 1.0, "stability": 0.85}  # normal speed (0.7-1.2); steadier than the default 0.5
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 
 

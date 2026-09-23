@@ -155,7 +155,7 @@ produces exactly the labelled candidate sets.
   (`https://api.tokenfactory.nebius.com/v1`). Set `NEBIUS_API_KEY` in `.env`. On Windows a key set with
   `setx` is also picked up.
 - **Voice:** [ElevenLabs text-to-speech](https://elevenlabs.io/docs/api-reference/text-to-speech/convert) with
-  the `eleven_multilingual_v2` model, at speed 1.2 (the maximum) and stability 0.85 for a quick, even delivery.
+  the `eleven_multilingual_v2` model, at normal speed (1.0) and stability 0.85 (default 0.5) for an even delivery.
 
 ## Layout
 
