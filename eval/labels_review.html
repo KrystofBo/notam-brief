@@ -1,0 +1,220 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>NOTAM Label Review</title><style>:root{--bg:#f7f7f5;--card:#fff;--fg:#1d1f22;--mut:#63676d;--line:#e2e2de;--code:#f0f0ec;
+--hi:#c0392b;--hi-bg:#fbeceb;--me:#b7791f;--me-bg:#fdf5e6;--lo:#4a6fa5;--lo-bg:#edf2f9}
+@media (prefers-color-scheme:dark){:root{--bg:#16181b;--card:#1f2226;--fg:#e7e7e4;--mut:#9a9ea4;--line:#33373c;--code:#181a1d;
+--hi:#f0786b;--hi-bg:#3a2220;--me:#e6b35a;--me-bg:#352c1c;--lo:#8fb0de;--lo-bg:#1f2a38}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:24px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}nav a{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:inherit;text-decoration:none;font-size:14px}
+.pill{color:var(--mut);font-variant-numeric:tabular-nums}
+section{margin-top:36px}h2{font-size:19px;display:flex;align-items:center;gap:10px;margin:0 0 2px}
+.num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--fg);color:var(--bg);font-size:14px}
+.meta{color:var(--mut);margin:0 0 12px}
+.item{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:8px;margin:10px 0;overflow:hidden}
+.high{--c:var(--hi);--cb:var(--hi-bg)}.medium{--c:var(--me);--cb:var(--me-bg)}.low{--c:var(--lo);--cb:var(--lo-bg)}
+.plain{padding:12px 14px}.plain p{margin:6px 0 0}.why{color:var(--mut);font-size:13px}
+.hdr{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pri{background:var(--cb);color:var(--c);font-weight:600;font-size:12px;padding:2px 7px;border-radius:4px;letter-spacing:.03em}
+.loc{color:var(--mut);font-size:13px}code{font-family:ui-monospace,Consolas,monospace;font-size:13px}
+.icao{margin:0;padding:12px 14px;background:var(--code);border-left:1px solid var(--line);font:12px/1.45 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:var(--mut)}
+details{margin-top:10px}summary{cursor:pointer;color:var(--mut)}.drop{padding-left:18px;color:var(--mut);font-size:13px}.drop li{margin:3px 0}
+.empty{color:var(--mut)}.note{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--mut)}
+@media (max-width:720px){.item{grid-template-columns:1fr}.icao{border-left:0;border-top:1px solid var(--line)}}</style></head><body><main>
+<h1>Relevance labels for the five test routes</h1>
+<p class="sub">Snapshot 2026-09-22 (NL 22 Sep 2026 16:07Z, DE 22 Sep 2026 16:05Z). Assumed flight: 2026-09-23T07:00:00Z to 2026-09-23T16:00:00Z,
+VFR single-engine piston, GND&ndash;FL065. Draft labels: a pilot must verify them before they count as ground truth.</p>
+<nav><a href="#r1"><b>1</b> EHLE Lelystad - EHHV Hilversum <span class="pill">7 / 25</span></a><a href="#r2"><b>2</b> EHTE Teuge - EHHO Hoogeveen <span class="pill">3 / 17</span></a><a href="#r3"><b>3</b> EHRD Rotterdam - EHTX Texel <span class="pill">4 / 59</span></a><a href="#r4"><b>4</b> EHTW Twente - EDDG Muenster-Osnabrueck <span class="pill">5 / 24</span></a><a href="#r5"><b>5</b> EHGG Groningen - EDWE Emden <span class="pill">5 / 23</span></a></nav>
+<p class="note">Pre-filter: the NOTAM circle is within its radius + 10 nm of the route, the altitude band overlaps the flight,
+and validity overlaps the window. Departure and destination aerodrome NOTAMs are always kept.
+Edit <code>eval/labels.json</code> and run <code>python -m eval.build_labels</code> to update this page and the scoring key.</p>
+<section id="r1"><h2><span class="num">1</span>EHLE Lelystad - EHHV Hilversum</h2>
+<p class="meta">25 candidates after the geometric pre-filter, <b>7</b> labelled relevant.</p>
+<article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>B0960/26</code><span class="loc">EHHV (Hilversum)</span></div>
+  <p>Hilversum runway 18/36 is shortened to 620 m for take-off and landing (TORA/TODA/ASDA/LDA). Check your landing and take-off performance against 620 m.</p><p class="why">Why it matters: Reduced runway length at destination</p></div>
+  <pre class="icao">B0960/26
+Q) EHAA/QMDCH/IV/NBO/A/000/999/5212N00509E005
+A) EHHV  B) FROM: 26/08/24 10:00  TO: 26/11/24 12:00 EST
+E) RWY 18/36 DECLARED DISTANCES CHANGED TO:
+TORA/TODA/ASDA/LDA 620M.</pre></article><article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>B0993/26</code><span class="loc">EHHV (Hilversum)</span></div>
+  <p>Hilversum is PPR (prior permission required). Get permission before you go. For the flight out, report to the tower in person before departure.</p><p class="why">Why it matters: Destination needs prior permission</p></div>
+  <pre class="icao">B0993/26
+Q) EHAA/QFAAP/IV/NBO/A/000/999/5212N00509E005
+A) EHHV  B) FROM: 26/08/31 00:00  TO: 26/10/14 15:00 EST
+E) AD PPR. PILOTS OF DEP ACFT REPORT TO TWR IN PERSON BEFORE FLT.</pre></article><article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>A2067/26</code><span class="loc">EHLE (Lelystad)</span></div>
+  <p>Leaving the Lelystad CTR: use the Bravo departure. The Mike departure is closed except for radio-failure procedures.</p><p class="why">Why it matters: Changes the departure routing out of EHLE</p></div>
+  <pre class="icao">A2067/26
+Q) EHAA/QPECH/V/NBO/A/000/999/5227N00531E005
+A) EHLE  B) FROM: 26/09/03 09:36  TO: 26/12/03 09:00 EST
+E) EXIT CTR VIA BRAVO DEP. MIKE DEP NOT AVBL, EXCEPT FOR COM-FAILURE
+PROCEDURES.
+REF AIP EHLE AD 2.22 PARA 4.2 AND 4.3 AND AD 2.EHLE-VAC.1.</pre></article><article class="item medium">
+  <div class="plain"><div class="hdr"><span class="pri">MEDIUM</span><code>A1527/26</code><span class="loc">EHLE (Lelystad)</span></div>
+  <p>Mobile crane beside runway 05/23 at Lelystad, 235 m right of the centreline, 160 ft AMSL, marked and lit.</p><p class="why">Why it matters: Obstacle next to the departure runway</p></div>
+  <pre class="icao">A1527/26
+Q) EHAA/QOBCE/IV/M/A/000/999/5227N00531E005
+A) EHLE  B) FROM: 26/07/01 07:53  TO: 26/10/01 20:00
+E) MOBILE CRANE BTN PSN 522654.4N 0053040.1E AND 522656.6N
+0053044.1E, BTN 553M AND 655M BEYOND THR RWY 05 AND 235M RIGHT FROM
+RCL. 160FT AMSL, MARKED AND LGTD.</pre></article><article class="item medium">
+  <div class="plain"><div class="hdr"><span class="pri">MEDIUM</span><code>A2061/26</code><span class="loc">EHLE (Lelystad)</span></div>
+  <p>Migrating geese at Lelystad from sunrise to sunset. Watch for birds on take-off and in the circuit.</p><p class="why">Why it matters: Bird hazard at departure during the flight window</p></div>
+  <pre class="icao">A2061/26
+Q) EHAA/QFAHX/IV/NBO/A/000/999/5227N00531E005
+A) EHLE  B) FROM: 26/09/02 10:28  TO: 26/12/02 21:00 EST
+E) MIGRATING GEESE.
+SCHEDULE: SR-SS</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>A2068/26</code><span class="loc">EHLE (Lelystad)</span></div>
+  <p>Arriving at Lelystad: enter the CTR via Mike. Bravo arrival is not available (special VFR exempt). Matters only if you return or divert to EHLE.</p><p class="why">Why it matters: Useful only for a return or diversion to EHLE</p></div>
+  <pre class="icao">A2068/26
+Q) EHAA/QPBCH/V/NBO/A/000/999/5227N00531E005
+A) EHLE  B) FROM: 26/09/03 09:37  TO: 26/12/03 09:00 EST
+E) ENTER CTR VIA MIKE ARR.
+BRAVO ARR NOT AVBL (SPECIAL VFR EXEMPTED) .
+REF AIP EHLE AD 2.22 PARA 4.2 AND 4.3 AND AD 2.EHLE-VAC.1.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>A2189/26</code><span class="loc">EHLE (Lelystad)</span></div>
+  <p>At Lelystad, taxiway N between A2 and N1 is closed, including N2 and apron L. Expect a different taxi route.</p><p class="why">Why it matters: Affects taxi routing at departure</p></div>
+  <pre class="icao">A2189/26
+Q) EHAA/QMXLC/IV/BO/A/000/999/5227N00531E005
+A) EHLE  B) FROM: 26/09/21 05:00  TO: 26/12/21 21:00 EST
+E) TWY N BTWN A2 AND N1, INCL N2 AND APRON L, CLSD DUE TO WIP.</pre></article>
+<details><summary>18 labelled not relevant, with reasons</summary><ul class="drop"><li><code>B0896/26</code> Limited surveillance over the North Sea; the route is inland</li><li><code>B1037/26</code> Obstacle lights out at the IJsselmeer wind farm, 8.6 nm from track; daytime flight</li><li><code>A1473/26</code> UAS near Zeewolde under the route, but active only 2000-0500 daily (GND-200 ft AGL); outside a daytime flight</li><li><code>A2070/26</code> Same Zeewolde UAS area (600 m radius), night only (2000-0500)</li><li><code>A1441/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>A1528/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>A1529/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>A1530/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>A1551/26</code> IFR operating hours and IFR PPR</li><li><code>A1825/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>A2131/26</code> Code C (airliner-size) aircraft restriction</li><li><code>A2203/26</code> Helicopter exit closed; not relevant for a fixed-wing flight</li><li><code>B0643/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0673/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0678/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0746/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0747/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0764/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li></ul></details></section><section id="r2"><h2><span class="num">2</span>EHTE Teuge - EHHO Hoogeveen</h2>
+<p class="meta">17 candidates after the geometric pre-filter, <b>3</b> labelled relevant.</p>
+<article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>A2195/26</code><span class="loc">EHAA</span></div>
+  <p>Teuge parachute drop zone is enlarged to a 5 nm radius and raised to FL150, 0700-1800Z from 23 Sep. You depart from inside it: expect parachutists and use the published Teuge departure procedure.</p><p class="why">Why it matters: Active parachuting over the departure aerodrome during the flight window</p></div>
+  <pre class="icao">A2195/26
+Q) EHAA/QWPLW/IV/M/W/000/150/5215N00603E005
+A) EHAA  B) FROM: 26/09/23 07:00  TO: 26/09/26 18:00
+E) PJE AREA TEUGE RADIUS EXTENDED TO 5NM AND UPPER LIMIT RAISED TO
+FL150
+LOWER: GND
+UPPER: FL150
+SCHEDULE: 0700-1800</pre></article><article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>B1025/26</code><span class="loc">EHAA</span></div>
+  <p>Teuge parachute drop zone upper limit raised to FL150, 0600-1800Z. This is the companion to A2195 (2 nm core area).</p><p class="why">Why it matters: Active parachuting over the departure aerodrome</p></div>
+  <pre class="icao">B1025/26
+Q) EHAA/QWPXX/IV/M/W/000/150/5215N00603E002
+A) EHAA  B) FROM: 26/09/23 06:00  TO: 26/09/26 18:00
+E) PJE AREA TEUGE UPPER LIMIT RAISED TO FL150
+LOWER: GND
+UPPER: FL150
+SCHEDULE: 0600-1800</pre></article><article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>B0903/26</code><span class="loc">EHHO (Hoogeveen)</span></div>
+  <p>Unmarked crane 445 m east-southeast of the Hoogeveen ARP (bearing 107 degrees), 120 ft AMSL. It is not marked, so it is hard to see in the circuit.</p><p class="why">Why it matters: Unmarked obstacle close to the destination circuit</p></div>
+  <pre class="icao">B0903/26
+Q) EHAA/QOBCE/IV/M/A/000/999/5244N00631E005
+A) EHHO  B) FROM: 26/08/05 12:49  TO: 26/10/05 17:00
+E) CRANE ERECTED AT PSN 524347N 0063121E TRUE BEARING FROM ARP 107DEG
+DISTANCE 445M HGT 120FT AMSL, NO MARKINGS.</pre></article>
+<details><summary>14 labelled not relevant, with reasons</summary><ul class="drop"><li><code>B0896/26</code> North Sea surveillance; the route is inland</li><li><code>B0798/26</code> PPR at Teuge applies only to aircraft of 6000 kg or more and jets</li><li><code>B0799/26</code> IFR RNP approach 26 not available</li><li><code>C1537/22</code> Hamm VOR range limit; far from the route</li><li><code>B0644/26</code> Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross</li><li><code>B0733/26</code> Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross</li><li><code>B0643/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0673/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0678/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0725/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0746/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0747/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0749/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0764/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li></ul></details></section><section id="r3"><h2><span class="num">3</span>EHRD Rotterdam - EHTX Texel</h2>
+<p class="meta">59 candidates after the geometric pre-filter, <b>4</b> labelled relevant.</p>
+<article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>A2100/26</code><span class="loc">EHRD (Rotterdam)</span></div>
+  <p>Increased bird activity on and around Rotterdam. Higher risk of bird strike on departure and climb-out.</p><p class="why">Why it matters: Active bird hazard at departure</p></div>
+  <pre class="icao">A2100/26
+Q) EHAA/QFAHX/IV/NBO/A/000/999/5157N00426E005
+A) EHRD  B) FROM: 26/09/08 09:28  TO: 26/12/08 23:00 EST
+E) INCREASED BIRD ACTIVITY ON AND AROUND AD. AN INCREASED POTENTIAL
+FOR BIRD STRIKES EXISTS FOR ALL INBD AND OUBD ACFT.</pre></article><article class="item medium">
+  <div class="plain"><div class="hdr"><span class="pri">MEDIUM</span><code>A2245/26</code><span class="loc">EHRD (Rotterdam)</span></div>
+  <p>Obstacle 142 ft AMSL, marked and lit, 1950 m before the runway 06 threshold and 111 m left of the extended centreline. It sits under the runway 24 climb-out. Valid only 23 Sep 0700-0900Z.</p><p class="why">Why it matters: Obstacle on the departure path if you leave early</p></div>
+  <pre class="icao">A2245/26
+Q) EHAA/QOBCE/IV/M/A/000/999/5157N00426E005
+A) EHRD  B) FROM: 26/09/23 07:00  TO: 26/09/23 09:00
+E) OBSTACLE ERECTED AT PSN 515639.9N0042420.8E. 1950M BEFORE THR RWY 
+06 AND 111M LEFT OF EXTD RCL. 142FT AMSL, MARKED AND LGTD, OCA/H NOT 
+AFFECTED.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>B0896/26</code><span class="loc">EHAA</span></div>
+  <p>Limited radar and surveillance coverage over the North Sea below FL055. If you track offshore along the coast, FIS may not see you.</p><p class="why">Why it matters: Affects the flight information service on a low coastal route</p></div>
+  <pre class="icao">B0896/26
+Q) EHAA/QCBLT/IV/BO/E/000/055/5258N00429E097
+A) EHAA  B) FROM: 26/08/03 19:27  TO: 26/11/03 14:00 EST
+E) LIMITED SURVEILLANCE COVERAGE OVER THE NORTH SEA BELOW FL055.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>A2246/26</code><span class="loc">EHRD (Rotterdam)</span></div>
+  <p>Same obstacle as A2245, published as an aerodrome obstacle chart (AOC) amendment for runway 24. Nothing new for a VFR pilot.</p><p class="why">Why it matters: Duplicate of A2245</p></div>
+  <pre class="icao">A2246/26
+Q) EHAA/QPOCH/I/NBO/A/000/999/5157N00426E005
+A) EHRD  B) FROM: 26/09/23 07:00  TO: 26/09/23 09:00
+E) REF AIP NETHERLANDS PAGE AD.2 EHRD-AOC-TYPE A RWY 06-24. OBSTACLE 
+ERECTED AT PSN 515639.9N 0042420.8E, 1753M BEYOND TORA RWY 24 AND 
+111M RIGHT OF EXTD RCL, 142FT AMSL, MARKED AND LGTD.</pre></article>
+<details><summary>55 labelled not relevant, with reasons</summary><ul class="drop"><li><code>A1595/26</code> Radio coverage gap between the EHRD CTR and EHSE lies south of Rotterdam; the route goes north</li><li><code>A2228/26</code> Crane 621 ft AMSL north of Schiphol near Spaarndam, about 7 nm inland of the coastal track</li><li><code>B0923/26</code> Obstacle lights out at the Hollandse Kust Zuid wind farm (738 ft), about 10 nm offshore; daytime flight</li><li><code>B1076/26</code> Obstacle lights out at the Egmond aan Zee wind farm (378 ft AMSL), about 8 nm offshore. Relevant at night or on an offshore track, not on a daytime coastal route. Hard judgement case.</li><li><code>A3004/25</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1263/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1500/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1525/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1531/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1628/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1731/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1786/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1812/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1815/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1820/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1821/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1822/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1954/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A1955/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2016/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2017/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2018/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2026/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2027/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2033/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2048/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2049/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2050/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2129/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2136/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2169/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2170/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2186/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2196/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2197/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2201/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2210/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2212/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2227/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2229/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2235/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2237/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2239/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2240/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2241/26</code> Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR</li><li><code>A2099/26</code> Runway 24 preferred for landing at Rotterdam; you are departing</li><li><code>A2243/26</code> Taxiway sign not lit; daytime flight</li><li><code>A2244/26</code> IFR minima</li><li><code>B0792/26</code> Texel non-Schengen and customs restrictions; this is a domestic flight</li><li><code>B0643/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0673/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0678/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0746/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0747/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0764/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li></ul></details></section><section id="r4"><h2><span class="num">4</span>EHTW Twente - EDDG Muenster-Osnabrueck</h2>
+<p class="meta">24 candidates after the geometric pre-filter, <b>5</b> labelled relevant.</p>
+<article class="item medium">
+  <div class="plain"><div class="hdr"><span class="pri">MEDIUM</span><code>F2313/26</code><span class="loc">EDGG</span></div>
+  <p>Wind farm 2 NM northeast of Steinfurt, almost directly on track (0.3 nm): 984 ft AMSL, 806 ft AGL, marked day and night. Keep clear vertically.</p><p class="why">Why it matters: Tall obstacle on the route</p></div>
+  <pre class="icao">F2313/26
+Q) EDGG/QOBCE/IV/M/E/000/010/5211N00723E002
+A) EDGG  B) FROM: 26/08/24 00:00  TO: 26/10/23 23:59
+E) WINDPARK PSN 2NM NE STEINFURT,521037N 0072306E, ELEV 984FT/806FT 
+AGL. DAY AND NIGHT MARKED.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>F2082/26</code><span class="loc">EDGG</span></div>
+  <p>Wind farm 2.4 NM northwest of Saerbeck, about 3 nm north of track near the EDDG approach: 965 ft AMSL, 819 ft AGL.</p><p class="why">Why it matters: Tall obstacle near the arrival</p></div>
+  <pre class="icao">F2082/26
+Q) EDGG/QOBCE/IV/M/E/000/010/5212N00736E001
+A) EDGG  B) FROM: 26/08/01 00:00  TO: 26/10/01 23:59
+E) WINDPARK 2.4NM NW SAERBECK, PSN 521216N 0073532E.
+ELEV 965FT/819FT AGL. DAY AND NIGHT MARKED.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>F2087/26</code><span class="loc">EDGG</span></div>
+  <p>Wind farm 1.6 NM northwest of Saerbeck, about 3 nm from track: 968 ft AMSL, 819 ft AGL.</p><p class="why">Why it matters: Tall obstacle near the arrival</p></div>
+  <pre class="icao">F2087/26
+Q) EDGG/QOBCE/IV/M/E/000/010/5212N00736E001
+A) EDGG  B) FROM: 26/08/01 00:00  TO: 26/10/01 23:59
+E) WINDPARK 1.6NM NW SAERBECK, PSN 521145N 0073623E.
+ELEV 968FT/819FT AGL. DAY AND NIGHT MARKED.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>F2133/26</code><span class="loc">EDGG</span></div>
+  <p>Two wind turbines 2.8 NM northwest of Saerbeck: 927 ft AMSL, 783 ft AGL.</p><p class="why">Why it matters: Tall obstacle near the arrival</p></div>
+  <pre class="icao">F2133/26
+Q) EDGG/QOBCE/IV/M/E/000/010/5212N00735E001
+A) EDGG  B) FROM: 26/08/04 00:00  TO: 26/10/03 23:59
+E) 2 WINDMILLS 2.8NM NW SAERBECK, PSN 521221N 0073441E.
+ELEV 927FT/783FT AGL. DAY AND NIGHT MARKED.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>F2167/26</code><span class="loc">EDGG</span></div>
+  <p>Wind turbine 1.2 NM north of Saerbeck: 968 ft AMSL, 821 ft AGL.</p><p class="why">Why it matters: Tall obstacle near the arrival</p></div>
+  <pre class="icao">F2167/26
+Q) EDGG/QOBCE/IV/M/E/000/010/5212N00738E001
+A) EDGG  B) FROM: 26/08/01 00:00  TO: 26/10/01 23:59
+E) WINDMILL 1.2NM N SAERBECK, PSN 521140N 0073744E.
+ELEV 968FT/821FT AGL. DAY AND NIGHT MARKED.</pre></article>
+<details><summary>19 labelled not relevant, with reasons</summary><ul class="drop"><li><code>B0896/26</code> Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross</li><li><code>B0483/26</code> MYN NDB out of service; not needed for VFR navigation</li><li><code>C1537/22</code> Hamm VOR range limit</li><li><code>F2264/26</code> Wind farm near Bad Bentheim, 5.3 nm from track</li><li><code>F2609/26</code> Obstacle light out at Horstmar, 5.5 nm; daytime flight</li><li><code>F2633/26</code> Wind turbine near Heek, 6.4 nm from track</li><li><code>F2924/26</code> Obstacle light out at the Rheine wind farm, 7.8 nm; daytime flight</li><li><code>A4153/26</code> IFR LPV minima at EDDG</li><li><code>B0644/26</code> Military arrivals to ETNS/ETMN/ETNH</li><li><code>B0733/26</code> GPS unreliable in the eastern part of the Bremen FIR, far from the route</li><li><code>E3294/26</code> Fire-cover category at EDWN (Nordhorn), not on the route</li><li><code>B0643/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0673/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0678/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0725/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0746/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0747/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0749/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0764/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li></ul></details></section><section id="r5"><h2><span class="num">5</span>EHGG Groningen - EDWE Emden</h2>
+<p class="meta">23 candidates after the geometric pre-filter, <b>5</b> labelled relevant.</p>
+<article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>C3214/26</code><span class="loc">EDWE</span></div>
+  <p>Crane 300 m southwest of Emden aerodrome, 87 ft AMSL (85 ft AGL). NOT ICAO-marked, so it is hard to see.</p><p class="why">Why it matters: Unmarked obstacle close to the destination</p></div>
+  <pre class="icao">C3214/26
+Q) EDWW/QOBCE/IV/M/AE/000/001/5323N00714E001
+A) EDWE  B) FROM: 26/07/21 00:00  TO: 26/10/20 23:59 EST
+E) CRANE 300M SW AD AT PSN 532318N 0071339E. ELEV 87FT/85FT AGL.
+NOT ICAO MARKED.</pre></article><article class="item high">
+  <div class="plain"><div class="hdr"><span class="pri">HIGH</span><code>C4092/26</code><span class="loc">EDWE (Emden)</span></div>
+  <p>Significant bumps at the displaced thresholds of runways 07 and 25 at Emden. Expect a rough touchdown area and plan to land beyond the bumps.</p><p class="why">Why it matters: Runway surface hazard at the destination</p></div>
+  <pre class="icao">C4092/26
+Q) EDWW/QMTXX/IV/BO/A/000/999/5323N00714E005
+A) EDWE  B) FROM: 26/09/18 13:12  TO: 26/12/18 12:00 EST
+E) SIGNIFICANT BUMPS AT DISPLACED THR RWY 07 AND RWY 25.</pre></article><article class="item medium">
+  <div class="plain"><div class="hdr"><span class="pri">MEDIUM</span><code>C2521/26</code><span class="loc">EDWE</span></div>
+  <p>Crane 300 m southeast of the Emden ARP, 89 ft AMSL, marked day and night.</p><p class="why">Why it matters: Obstacle close to the destination</p></div>
+  <pre class="icao">C2521/26
+Q) EDWW/QOBCE/IV/M/AE/000/001/5323N00714E001
+A) EDWE  B) FROM: 26/06/07 00:00  TO: 26/09/30 23:59 EST
+E) CRANE ERECTED 300M SE ARP AT PSN 532320N 0071342E. 
+ELEV 89FT/87FT AGL, DAY AND NIGHT MARKED.</pre></article><article class="item medium">
+  <div class="plain"><div class="hdr"><span class="pri">MEDIUM</span><code>F2864/26</code><span class="loc">EDWW</span></div>
+  <p>Wind turbine 0.7 NM north of Hinte, about 2.7 nm from track on the approach to Emden: 587 ft AGL, marked day and night.</p><p class="why">Why it matters: Tall obstacle near the arrival</p></div>
+  <pre class="icao">F2864/26
+Q) EDWW/QOBCE/IV/M/E/000/006/5326N00712E001
+A) EDWW  B) FROM: 26/09/10 11:39  TO: 26/11/09 23:59
+E) WINDMILL 0.7NM N HINTE AT PSN 532543N 0071142E,
+ELEV 587FT/587FT AGL. DAY AND NIGHT MARKED.</pre></article><article class="item low">
+  <div class="plain"><div class="hdr"><span class="pri">LOW</span><code>C1292/25</code><span class="loc">EDWE (Emden)</span></div>
+  <p>Emden phone numbers changed: ATS/AFIS +49 531 70222315, OPS +49 4921 42434. Use these for PPR or arrival questions.</p><p class="why">Why it matters: Contact details for the destination</p></div>
+  <pre class="icao">C1292/25
+Q) EDWW/QFAXX/IV/NBO/A/000/999/5323N00714E005
+A) EDWE  B) FROM: 25/04/18 11:06  TO: PERM
+E) PHONE NUMBERS CHANGED:
+ATS/AFIS +49 531 70222315, OPS +49 4921 42434.</pre></article>
+<details><summary>18 labelled not relevant, with reasons</summary><ul class="drop"><li><code>B0896/26</code> Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross</li><li><code>B1074/26</code> UAS at Eemshaven (GND-400 ft, 1000-1500Z), about 10 nm north of track</li><li><code>A1484/26</code> Groningen: helicopter training not allowed</li><li><code>A1491/26</code> Groningen weekend and holiday hours; 23 Sep 2026 is a Wednesday</li><li><code>A1823/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>A1824/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>A1929/26</code> IFR procedure or approach minima; no effect on a VFR flight</li><li><code>B0644/26</code> Military arrivals to ETNS/ETMN/ETNH</li><li><code>B0733/26</code> GPS unreliable in the eastern part of the Bremen FIR</li><li><code>F2967/26</code> Obstacle light out on the Leer tower, 10 nm; daytime flight</li><li><code>C3564/26</code> IFR LPV minima at EDWE</li><li><code>E3565/26</code> Taxiway at EDWS (Norden), not on the route</li><li><code>B0643/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0673/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0678/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0746/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0747/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li><li><code>B0764/26</code> Germany-wide security or airspace-policy notice about distant FIRs or airline ops</li></ul></details></section>
+</main></body></html>

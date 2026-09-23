@@ -1,0 +1,149 @@
+route,notam_id,relevant,priority,reason
+1,B0960/26,1,HIGH,Reduced runway length at destination
+1,B0993/26,1,HIGH,Destination needs prior permission
+1,A2067/26,1,HIGH,Changes the departure routing out of EHLE
+1,A1527/26,1,MEDIUM,Obstacle next to the departure runway
+1,A2061/26,1,MEDIUM,Bird hazard at departure during the flight window
+1,A2068/26,1,LOW,Useful only for a return or diversion to EHLE
+1,A2189/26,1,LOW,Affects taxi routing at departure
+1,B0896/26,0,,Limited surveillance over the North Sea; the route is inland
+1,B1037/26,0,,"Obstacle lights out at the IJsselmeer wind farm, 8.6 nm from track; daytime flight"
+1,A1473/26,0,,"UAS near Zeewolde under the route, but active only 2000-0500 daily (GND-200 ft AGL); outside a daytime flight"
+1,A2070/26,0,,"Same Zeewolde UAS area (600 m radius), night only (2000-0500)"
+1,A1441/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+1,A1528/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+1,A1529/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+1,A1530/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+1,A1551/26,0,,IFR operating hours and IFR PPR
+1,A1825/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+1,A2131/26,0,,Code C (airliner-size) aircraft restriction
+1,A2203/26,0,,Helicopter exit closed; not relevant for a fixed-wing flight
+1,B0643/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+1,B0673/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+1,B0678/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+1,B0746/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+1,B0747/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+1,B0764/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,A2195/26,1,HIGH,Active parachuting over the departure aerodrome during the flight window
+2,B1025/26,1,HIGH,Active parachuting over the departure aerodrome
+2,B0903/26,1,HIGH,Unmarked obstacle close to the destination circuit
+2,B0896/26,0,,North Sea surveillance; the route is inland
+2,B0798/26,0,,PPR at Teuge applies only to aircraft of 6000 kg or more and jets
+2,B0799/26,0,,IFR RNP approach 26 not available
+2,C1537/22,0,,Hamm VOR range limit; far from the route
+2,B0644/26,0,,Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross
+2,B0733/26,0,,Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross
+2,B0643/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,B0673/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,B0678/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,B0725/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,B0746/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,B0747/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,B0749/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+2,B0764/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+3,A2100/26,1,HIGH,Active bird hazard at departure
+3,A2245/26,1,MEDIUM,Obstacle on the departure path if you leave early
+3,B0896/26,1,LOW,Affects the flight information service on a low coastal route
+3,A2246/26,1,LOW,Duplicate of A2245
+3,A1595/26,0,,Radio coverage gap between the EHRD CTR and EHSE lies south of Rotterdam; the route goes north
+3,A2228/26,0,,"Crane 621 ft AMSL north of Schiphol near Spaarndam, about 7 nm inland of the coastal track"
+3,B0923/26,0,,"Obstacle lights out at the Hollandse Kust Zuid wind farm (738 ft), about 10 nm offshore; daytime flight"
+3,B1076/26,0,,"Obstacle lights out at the Egmond aan Zee wind farm (378 ft AMSL), about 8 nm offshore. Relevant at night or on an offshore track, not on a daytime coastal route. Hard judgement case."
+3,A3004/25,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1263/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1500/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1525/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1531/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1628/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1731/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1786/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1812/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1815/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1820/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1821/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1822/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1954/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A1955/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2016/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2017/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2018/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2026/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2027/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2033/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2048/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2049/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2050/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2129/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2136/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2169/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2170/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2186/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2196/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2197/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2201/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2210/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2212/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2227/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2229/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2235/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2237/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2239/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2240/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2241/26,0,,"Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR"
+3,A2099/26,0,,Runway 24 preferred for landing at Rotterdam; you are departing
+3,A2243/26,0,,Taxiway sign not lit; daytime flight
+3,A2244/26,0,,IFR minima
+3,B0792/26,0,,Texel non-Schengen and customs restrictions; this is a domestic flight
+3,B0643/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+3,B0673/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+3,B0678/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+3,B0746/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+3,B0747/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+3,B0764/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,F2313/26,1,MEDIUM,Tall obstacle on the route
+4,F2082/26,1,LOW,Tall obstacle near the arrival
+4,F2087/26,1,LOW,Tall obstacle near the arrival
+4,F2133/26,1,LOW,Tall obstacle near the arrival
+4,F2167/26,1,LOW,Tall obstacle near the arrival
+4,B0896/26,0,,Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross
+4,B0483/26,0,,MYN NDB out of service; not needed for VFR navigation
+4,C1537/22,0,,Hamm VOR range limit
+4,F2264/26,0,,"Wind farm near Bad Bentheim, 5.3 nm from track"
+4,F2609/26,0,,"Obstacle light out at Horstmar, 5.5 nm; daytime flight"
+4,F2633/26,0,,"Wind turbine near Heek, 6.4 nm from track"
+4,F2924/26,0,,"Obstacle light out at the Rheine wind farm, 7.8 nm; daytime flight"
+4,A4153/26,0,,IFR LPV minima at EDDG
+4,B0644/26,0,,Military arrivals to ETNS/ETMN/ETNH
+4,B0733/26,0,,"GPS unreliable in the eastern part of the Bremen FIR, far from the route"
+4,E3294/26,0,,"Fire-cover category at EDWN (Nordhorn), not on the route"
+4,B0643/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,B0673/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,B0678/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,B0725/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,B0746/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,B0747/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,B0749/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+4,B0764/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+5,C3214/26,1,HIGH,Unmarked obstacle close to the destination
+5,C4092/26,1,HIGH,Runway surface hazard at the destination
+5,C2521/26,1,MEDIUM,Obstacle close to the destination
+5,F2864/26,1,MEDIUM,Tall obstacle near the arrival
+5,C1292/25,1,LOW,Contact details for the destination
+5,B0896/26,0,,Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross
+5,B1074/26,0,,"UAS at Eemshaven (GND-400 ft, 1000-1500Z), about 10 nm north of track"
+5,A1484/26,0,,Groningen: helicopter training not allowed
+5,A1491/26,0,,Groningen weekend and holiday hours; 23 Sep 2026 is a Wednesday
+5,A1823/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+5,A1824/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+5,A1929/26,0,,IFR procedure or approach minima; no effect on a VFR flight
+5,B0644/26,0,,Military arrivals to ETNS/ETMN/ETNH
+5,B0733/26,0,,GPS unreliable in the eastern part of the Bremen FIR
+5,F2967/26,0,,"Obstacle light out on the Leer tower, 10 nm; daytime flight"
+5,C3564/26,0,,IFR LPV minima at EDWE
+5,E3565/26,0,,"Taxiway at EDWS (Norden), not on the route"
+5,B0643/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+5,B0673/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+5,B0678/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+5,B0746/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+5,B0747/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops
+5,B0764/26,0,,Germany-wide security or airspace-policy notice about distant FIRs or airline ops

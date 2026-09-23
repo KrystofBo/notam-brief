@@ -1,0 +1,93 @@
+{
+ "_note": "Draft labels for a daytime VFR flight in a single-engine piston, 23 Sep 2026 0700-1600Z, below FL065. Every candidate not listed under a route is labelled NOT relevant with the default reason for its group. Verify before using as ground truth.",
+ "_default_reasons": {
+  "IFR": "IFR procedure or approach minima; no effect on a VFR flight",
+  "EDXX": "Germany-wide security or airspace-policy notice about distant FIRs or airline ops",
+  "EHAM": "Schiphol ground ops, cranes or IFR minima; the coastal VFR route stays outside the Schiphol CTR",
+  "FAR": "Circle only touches the corridor; the item is far from the actual track or concerns another aerodrome or a region the route does not cross",
+  "LIGHTS": "Obstacle lighting unserviceable; daytime flight and the obstacle is well clear of the track"
+ },
+ "routes": {
+  "1": {
+   "A2067/26": {"p": "HIGH", "s": "Leaving the Lelystad CTR: use the Bravo departure. The Mike departure is closed except for radio-failure procedures.", "r": "Changes the departure routing out of EHLE"},
+   "B0993/26": {"p": "HIGH", "s": "Hilversum is PPR (prior permission required). Get permission before you go. For the flight out, report to the tower in person before departure.", "r": "Destination needs prior permission"},
+   "B0960/26": {"p": "HIGH", "s": "Hilversum runway 18/36 is shortened to 620 m for take-off and landing (TORA/TODA/ASDA/LDA). Check your landing and take-off performance against 620 m.", "r": "Reduced runway length at destination"},
+   "A2061/26": {"p": "MEDIUM", "s": "Migrating geese at Lelystad from sunrise to sunset. Watch for birds on take-off and in the circuit.", "r": "Bird hazard at departure during the flight window"},
+   "A1527/26": {"p": "MEDIUM", "s": "Mobile crane beside runway 05/23 at Lelystad, 235 m right of the centreline, 160 ft AMSL, marked and lit.", "r": "Obstacle next to the departure runway"},
+   "A2189/26": {"p": "LOW", "s": "At Lelystad, taxiway N between A2 and N1 is closed, including N2 and apron L. Expect a different taxi route.", "r": "Affects taxi routing at departure"},
+   "A2068/26": {"p": "LOW", "s": "Arriving at Lelystad: enter the CTR via Mike. Bravo arrival is not available (special VFR exempt). Matters only if you return or divert to EHLE.", "r": "Useful only for a return or diversion to EHLE"},
+   "_not": {
+    "A1473/26": "UAS near Zeewolde under the route, but active only 2000-0500 daily (GND-200 ft AGL); outside a daytime flight",
+    "A2070/26": "Same Zeewolde UAS area (600 m radius), night only (2000-0500)",
+    "A2203/26": "Helicopter exit closed; not relevant for a fixed-wing flight",
+    "A2131/26": "Code C (airliner-size) aircraft restriction",
+    "A1551/26": "IFR operating hours and IFR PPR",
+    "B1037/26": "Obstacle lights out at the IJsselmeer wind farm, 8.6 nm from track; daytime flight",
+    "B0896/26": "Limited surveillance over the North Sea; the route is inland"
+   }
+  },
+  "2": {
+   "A2195/26": {"p": "HIGH", "s": "Teuge parachute drop zone is enlarged to a 5 nm radius and raised to FL150, 0700-1800Z from 23 Sep. You depart from inside it: expect parachutists and use the published Teuge departure procedure.", "r": "Active parachuting over the departure aerodrome during the flight window"},
+   "B1025/26": {"p": "HIGH", "s": "Teuge parachute drop zone upper limit raised to FL150, 0600-1800Z. This is the companion to A2195 (2 nm core area).", "r": "Active parachuting over the departure aerodrome"},
+   "B0903/26": {"p": "HIGH", "s": "Unmarked crane 445 m east-southeast of the Hoogeveen ARP (bearing 107 degrees), 120 ft AMSL. It is not marked, so it is hard to see in the circuit.", "r": "Unmarked obstacle close to the destination circuit"},
+   "_not": {
+    "B0798/26": "PPR at Teuge applies only to aircraft of 6000 kg or more and jets",
+    "B0799/26": "IFR RNP approach 26 not available",
+    "C1537/22": "Hamm VOR range limit; far from the route",
+    "B0896/26": "North Sea surveillance; the route is inland"
+   }
+  },
+  "3": {
+   "A2100/26": {"p": "HIGH", "s": "Increased bird activity on and around Rotterdam. Higher risk of bird strike on departure and climb-out.", "r": "Active bird hazard at departure"},
+   "A2245/26": {"p": "MEDIUM", "s": "Obstacle 142 ft AMSL, marked and lit, 1950 m before the runway 06 threshold and 111 m left of the extended centreline. It sits under the runway 24 climb-out. Valid only 23 Sep 0700-0900Z.", "r": "Obstacle on the departure path if you leave early"},
+   "A2246/26": {"p": "LOW", "s": "Same obstacle as A2245, published as an aerodrome obstacle chart (AOC) amendment for runway 24. Nothing new for a VFR pilot.", "r": "Duplicate of A2245"},
+   "B0896/26": {"p": "LOW", "s": "Limited radar and surveillance coverage over the North Sea below FL055. If you track offshore along the coast, FIS may not see you.", "r": "Affects the flight information service on a low coastal route"},
+   "_not": {
+    "B1076/26": "Obstacle lights out at the Egmond aan Zee wind farm (378 ft AMSL), about 8 nm offshore. Relevant at night or on an offshore track, not on a daytime coastal route. Hard judgement case.",
+    "B0923/26": "Obstacle lights out at the Hollandse Kust Zuid wind farm (738 ft), about 10 nm offshore; daytime flight",
+    "A1595/26": "Radio coverage gap between the EHRD CTR and EHSE lies south of Rotterdam; the route goes north",
+    "A2228/26": "Crane 621 ft AMSL north of Schiphol near Spaarndam, about 7 nm inland of the coastal track",
+    "A2099/26": "Runway 24 preferred for landing at Rotterdam; you are departing",
+    "A2243/26": "Taxiway sign not lit; daytime flight",
+    "A2244/26": "IFR minima",
+    "B0792/26": "Texel non-Schengen and customs restrictions; this is a domestic flight"
+   }
+  },
+  "4": {
+   "F2313/26": {"p": "MEDIUM", "s": "Wind farm 2 NM northeast of Steinfurt, almost directly on track (0.3 nm): 984 ft AMSL, 806 ft AGL, marked day and night. Keep clear vertically.", "r": "Tall obstacle on the route"},
+   "F2082/26": {"p": "LOW", "s": "Wind farm 2.4 NM northwest of Saerbeck, about 3 nm north of track near the EDDG approach: 965 ft AMSL, 819 ft AGL.", "r": "Tall obstacle near the arrival"},
+   "F2087/26": {"p": "LOW", "s": "Wind farm 1.6 NM northwest of Saerbeck, about 3 nm from track: 968 ft AMSL, 819 ft AGL.", "r": "Tall obstacle near the arrival"},
+   "F2133/26": {"p": "LOW", "s": "Two wind turbines 2.8 NM northwest of Saerbeck: 927 ft AMSL, 783 ft AGL.", "r": "Tall obstacle near the arrival"},
+   "F2167/26": {"p": "LOW", "s": "Wind turbine 1.2 NM north of Saerbeck: 968 ft AMSL, 821 ft AGL.", "r": "Tall obstacle near the arrival"},
+   "_not": {
+    "A4153/26": "IFR LPV minima at EDDG",
+    "B0483/26": "MYN NDB out of service; not needed for VFR navigation",
+    "F2264/26": "Wind farm near Bad Bentheim, 5.3 nm from track",
+    "F2633/26": "Wind turbine near Heek, 6.4 nm from track",
+    "F2609/26": "Obstacle light out at Horstmar, 5.5 nm; daytime flight",
+    "F2924/26": "Obstacle light out at the Rheine wind farm, 7.8 nm; daytime flight",
+    "E3294/26": "Fire-cover category at EDWN (Nordhorn), not on the route",
+    "B0733/26": "GPS unreliable in the eastern part of the Bremen FIR, far from the route",
+    "B0644/26": "Military arrivals to ETNS/ETMN/ETNH",
+    "C1537/22": "Hamm VOR range limit"
+   }
+  },
+  "5": {
+   "C4092/26": {"p": "HIGH", "s": "Significant bumps at the displaced thresholds of runways 07 and 25 at Emden. Expect a rough touchdown area and plan to land beyond the bumps.", "r": "Runway surface hazard at the destination"},
+   "C3214/26": {"p": "HIGH", "s": "Crane 300 m southwest of Emden aerodrome, 87 ft AMSL (85 ft AGL). NOT ICAO-marked, so it is hard to see.", "r": "Unmarked obstacle close to the destination"},
+   "C2521/26": {"p": "MEDIUM", "s": "Crane 300 m southeast of the Emden ARP, 89 ft AMSL, marked day and night.", "r": "Obstacle close to the destination"},
+   "F2864/26": {"p": "MEDIUM", "s": "Wind turbine 0.7 NM north of Hinte, about 2.7 nm from track on the approach to Emden: 587 ft AGL, marked day and night.", "r": "Tall obstacle near the arrival"},
+   "C1292/25": {"p": "LOW", "s": "Emden phone numbers changed: ATS/AFIS +49 531 70222315, OPS +49 4921 42434. Use these for PPR or arrival questions.", "r": "Contact details for the destination"},
+   "_not": {
+    "B1074/26": "UAS at Eemshaven (GND-400 ft, 1000-1500Z), about 10 nm north of track",
+    "A1484/26": "Groningen: helicopter training not allowed",
+    "A1491/26": "Groningen weekend and holiday hours; 23 Sep 2026 is a Wednesday",
+    "C3564/26": "IFR LPV minima at EDWE",
+    "F2967/26": "Obstacle light out on the Leer tower, 10 nm; daytime flight",
+    "E3565/26": "Taxiway at EDWS (Norden), not on the route",
+    "B0733/26": "GPS unreliable in the eastern part of the Bremen FIR",
+    "B0644/26": "Military arrivals to ETNS/ETMN/ETNH"
+   }
+  }
+ }
+}

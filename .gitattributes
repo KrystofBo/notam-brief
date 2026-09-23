@@ -1,0 +1,2 @@
+# Frozen bulletins are evaluation inputs: keep them byte-for-byte.
+data/snapshots/** -text

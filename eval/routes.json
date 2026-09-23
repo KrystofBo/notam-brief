@@ -1,0 +1,28 @@
+{
+ "_note": "The five test routes exactly as labelled: path coordinates, flight window, altitude band and corridor must stay fixed or the candidate sets (and therefore the labels) change.",
+ "snapshot": "2026-09-22",
+ "window": ["2026-09-23T07:00:00Z", "2026-09-23T16:00:00Z"],
+ "band_fl": [0, 65],
+ "corridor_nm": 10,
+ "alt_ft": 3000,
+ "routes": [
+  {"id": 1, "name": "EHLE Lelystad - EHHV Hilversum", "dep": "EHLE", "dest": "EHHV", "via": [],
+   "path": [["EHLE", 52.4603, 5.5272], ["EHHV", 52.1917, 5.1469]],
+   "why": "Fits the SkyDemon trial limit; active NOTAMs at both ends"},
+  {"id": 2, "name": "EHTE Teuge - EHHO Hoogeveen", "dep": "EHTE", "dest": "EHHO", "via": [],
+   "path": [["EHTE", 52.2447, 6.0467], ["EHHO", 52.7300, 6.5161]],
+   "why": "Quiet inland airspace; tests precision"},
+  {"id": 3, "name": "EHRD Rotterdam - EHTX Texel", "dep": "EHRD", "dest": "EHTX",
+   "via": ["52.10,4.27", "52.46,4.57", "52.95,4.72"],
+   "path": [["EHRD", 51.9569, 4.4372], ["52.10,4.27", 52.10, 4.27], ["52.46,4.57", 52.46, 4.57],
+            ["52.95,4.72", 52.95, 4.72], ["EHTX", 53.1153, 4.8336]],
+   "note": "coastal routing below the Amsterdam TMA via Scheveningen, IJmuiden and Den Helder",
+   "why": "Coastal, low level; offshore wind farm and obstacle judgement calls"},
+  {"id": 4, "name": "EHTW Twente - EDDG Muenster-Osnabrueck", "dep": "EHTW", "dest": "EDDG", "via": [],
+   "path": [["EHTW", 52.2758, 6.8891], ["EDDG", 52.1346, 7.6848]],
+   "why": "Cross-border; German bulletin and FIR boundary"},
+  {"id": 5, "name": "EHGG Groningen - EDWE Emden", "dep": "EHGG", "dest": "EDWE", "via": [],
+   "path": [["EHGG", 53.1197, 6.5794], ["EDWE", 53.3911, 7.2272]],
+   "why": "Second cross-border case, northern and partly coastal"}
+ ]
+}

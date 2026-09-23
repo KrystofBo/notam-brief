@@ -1,0 +1,112 @@
+# NOTAM Brief
+
+Route-specific NOTAM and weather briefing for VFR pilots in the Netherlands and Germany (AI Innovate Amsterdam).
+
+The pilot enters departure, destination and planned time. The system takes the complete national NOTAM set
+(a few hundred items for NL, about 800 for DE), keeps only what affects that flight, ranks it by operational
+importance, and explains each item in plain language next to the original ICAO text. It is decision support,
+not an authority: the pilot in command makes the final decision.
+
+## Quick start
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+copy .env.example .env            # then put your Nebius Token Factory key in .env
+uvicorn app:app --port 8765
+```
+
+Open http://localhost:8765, click one of the five test routes (or type any NL/DE aerodrome codes) and press
+**Get briefing**. Choose **Snapshot 2026-09-22 (labelled test set)** under *NOTAM data* to reproduce the
+labelled scenario, or **Live bulletins** for today's NOTAMs.
+
+From the command line:
+
+```bash
+python -m briefing.pipeline EHLE EHHV --time 2026-09-23T09:00
+python -m briefing.pipeline EHRD EHTX --via 52.10,4.27 52.46,4.57 52.95,4.72 --source 2026-09-22
+```
+
+## How it works
+
+```mermaid
+flowchart LR
+  A[notaminfo.com PIBs<br/>NL + DE] --> B[Parse Q-line, A-E,<br/>schedule]
+  B --> C[Pre-filter<br/>corridor, altitude, time]
+  W[aviationweather.gov<br/>METAR / TAF] --> D
+  C --> D[Nebius Token Factory<br/>DeepSeek-V4-Flash<br/>strict JSON per NOTAM]
+  D --> E[Ranked briefing<br/>plain language + original text]
+```
+
+1. **Ingest** ([briefing/ingest.py](briefing/ingest.py)): fetch the NL and DE Pre-flight Information
+   Bulletins, split them into FIR, section and aerodrome, and parse each NOTAM. The Q-line gives FIR, Q-code,
+   traffic, purpose, scope, lower and upper limit, centre and radius. Items A, B, C and E and any schedule are
+   parsed too. Live bulletins are cached for three hours.
+2. **Pre-filter** ([briefing/prefilter.py](briefing/prefilter.py)): keep a NOTAM when its circle comes
+   within its radius + 10 nm of the route, its altitude band overlaps the flight, and its validity overlaps
+   the flight window. Departure, destination and alternate NOTAMs are always kept. The margins are generous
+   because recall matters more than precision here.
+3. **Weather** ([briefing/weather.py](briefing/weather.py)): METAR and TAF for departure and destination.
+   Small fields without a METAR (EHHV, EHTE, EHHO, EHTX, EHTW) use the nearest reporting station.
+4. **Model stage** ([briefing/llm.py](briefing/llm.py), [prompts/system_prompt.md](prompts/system_prompt.md)):
+   the surviving NOTAMs, the route and the weather go to an open-weight model on Nebius Token Factory. The
+   default model is `deepseek-ai/DeepSeek-V4-Flash-0731`. It returns strict JSON for each NOTAM: relevant,
+   priority, a one-line reason and a plain-language summary. The JSON schema pins the NOTAM ids and the item
+   count. If a response is truncated or invalid, the chunk is split and retried. Any NOTAM the model still
+   skips is shown to the pilot as *not assessed*, never dropped silently.
+5. **Output** ([app.py](app.py), [static/index.html](static/index.html)): weather at the top, then the
+   ranked items with the original ICAO text beside each one, then the NOTAMs judged not relevant with the
+   reasons.
+
+## Evaluation
+
+| File | What it is |
+|---|---|
+| [eval/routes.json](eval/routes.json) | The five test routes, flight window, altitude band and corridor used for labelling |
+| [eval/routes/](eval/routes) | Each route's pre-filtered NOTAMs, verbatim and in bulletin order |
+| [eval/labels.json](eval/labels.json) | Draft relevance labels with priority and plain-language summary (**to be verified by a pilot**) |
+| [eval/labels_flat.csv](eval/labels_flat.csv) | Scoring key generated from the labels (`python -m eval.build_labels`) |
+| [eval/labels_review.html](eval/labels_review.html) | Review page for the labels |
+| [eval/results/latest.md](eval/results/latest.md) | Latest benchmark summary |
+
+```bash
+python -m eval.bench                                            # default model, pre-filter on
+python -m eval.bench --models deepseek-ai/DeepSeek-V4-Flash-0731 <other-model> --modes prefilter full
+```
+
+For each route the benchmark reports:
+
+- recall against the labels. This is the metric that matters, because a missed relevant NOTAM is the real
+  failure.
+- precision
+- the number of items the pilot must read
+- tokens in and out, cost per briefing and latency
+
+It runs on the frozen snapshot in `data/snapshots/2026-09-22/`. `--modes full` sends the whole national set
+without the pre-filter, chunked into 80 NOTAMs per request. Run `pytest` to check that the snapshot still
+produces exactly the labelled candidate sets.
+
+## Data sources and caveats
+
+- **NOTAMs:** [notaminfo.com](https://notaminfo.com/latest?country=Netherlands). These are EAD-derived PIBs,
+  free and refreshed daily, but **not official documents**. Production would take data from EUROCONTROL EAD
+  directly or through a licensed connected provider such as autorouter.
+- **Weather:** [aviationweather.gov data API](https://aviationweather.gov/data/api/) for METAR and TAF.
+- **Aerodromes:** [OurAirports](https://ourairports.com/data/) (public domain), filtered to NL, DE, BE and LU.
+- **Model:** [Nebius Token Factory](https://tokenfactory.nebius.com/), an OpenAI-compatible API
+  (`https://api.tokenfactory.nebius.com/v1`). Set `NEBIUS_API_KEY` in `.env`. On Windows a key set with
+  `setx` is also picked up.
+
+## Layout
+
+```
+app.py                  FastAPI demo server
+static/index.html       demo UI
+briefing/               ingest, prefilter, weather, llm, pipeline
+prompts/system_prompt.md
+eval/                   routes, labels, benchmark, results
+data/snapshots/         frozen bulletins used for evaluation
+data/aerodromes.csv     aerodrome coordinates
+tests/                  snapshot regression tests
+```
