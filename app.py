@@ -87,7 +87,7 @@ def brief(req: BriefRequest):
 @app.post("/api/voice")
 def voice_summary(req: VoiceRequest):
     try:
-        text = voice.script(req.flight, req.items, req.unassessed)
+        text = voice.phraseology(voice.script(req.flight, req.items, req.unassessed))
         audio = voice.speak(text)
     except llm.LLMError as e:
         raise HTTPException(502, f"Model call failed: {e}")

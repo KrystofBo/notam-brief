@@ -75,8 +75,16 @@ flowchart LR
    the brief aloud and the page shows the transcript.
    - Every number in a spoken sentence must appear in the summaries that sentence came from. If it doesn't,
      the summaries themselves are read instead. The same applies to any item the model leaves out.
+   - The text is then turned into ICAO radiotelephony (Annex 10 Vol II, 5.2.1.4) before it is read. The model
+     writes digits and code does the conversion, so the number check still sees the digits.
+     - Taxiway and holding-point designators and aerodrome codes use the spelling alphabet: "taxiway November
+       between Alfa two and November one", "Echo Hotel Sierra Echo".
+     - Runways, times, frequencies and flight levels are read digit by digit, with 9 as "niner": "runway one
+       eight, three six", "one two four decimal three", "flight level one five zero".
+     - Heights and distances in whole hundreds and thousands say "hundred" and "thousand", for example "one
+       thousand five hundred feet". Other heights and distances are read digit by digit.
    - On the five test routes the spoken brief is 27-127 words, against 97-334 words in the written summaries.
-   - The model takes about 2.5 s and ElevenLabs about 5-7 s.
+   - The model takes about 2.5 s and ElevenLabs about 5-9 s, depending on length.
    - Needs `ELEVENLABS_API_KEY` in `.env`.
 
 ## Results so far
