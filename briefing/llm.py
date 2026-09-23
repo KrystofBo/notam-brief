@@ -91,8 +91,16 @@ def user_message(flight_block, weather_text, notams, weather_here=True):
         wx = "(Weather is handled in a separate request. Return an empty weather_summary.)"
     else:
         wx = weather_text or "(no weather supplied)"
-    body = "\n\n".join(n["raw"] for n in notams) or "(none)"
+    body = "\n\n".join(_notam_block(n) for n in notams) or "(none)"
     return f"FLIGHT\n{flight_block}\n\nWEATHER\n{wx}\n\nNOTAMS ({len(notams)} items)\n{body}"
+
+
+def _notam_block(n):
+    """The NOTAM verbatim, with the pre-filter's geometry line (if any) directly under its id."""
+    if not n.get("geometry"):
+        return n["raw"]
+    first, _, rest = n["raw"].partition("\n")
+    return f"{first}\nROUTE GEOMETRY (computed, not part of the NOTAM): {n['geometry']}\n{rest}"
 
 
 FORMAT_OK = {}  # model -> index into _formats() of the first response_format the model accepted

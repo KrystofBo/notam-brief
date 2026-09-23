@@ -1,4 +1,4 @@
-# Benchmark results (20260923-093638-combined)
+# Benchmark results
 
 Snapshot `2026-09-22`, labels `eval/labels_flat.csv`. Recall and precision are pooled over routes; the other columns are means per briefing. *Hints* is the computed route geometry given to the model; *Prompt* is the first 7 hex digits of the system prompt's SHA-1.
 

@@ -69,6 +69,7 @@ pre,.mono{font:12px/1.45 ui-monospace,Consolas,monospace}
 .item .sum{margin:6px 0 4px;font-size:15px}
 .item .why{color:var(--mut);font-size:13px;margin:0}
 .item .valid{color:var(--faint);font-size:12px;margin-top:6px}
+.item .geo{color:var(--mut);font-size:12px;margin-top:6px}
 .item pre{margin:0;padding:12px 14px;background:var(--code);border-left:1px solid var(--line);white-space:pre-wrap;word-break:break-word;color:var(--mut)}
 .sec{margin-top:18px}
 details.card{padding:10px 14px;margin-top:14px}
@@ -191,12 +192,13 @@ function itemCard(x) {
   const p = x.priority.toLowerCase();
   const valid = [x.valid_from ? `from ${day(x.valid_from)} ${hhmm(x.valid_from)}` : "", x.valid_to_raw ? `to ${x.valid_to_raw}` : "",
                  x.schedule ? `schedule ${x.schedule}` : ""].filter(Boolean).join(" · ");
+  const geo = x.geometry ? `<div class="geo">Position: ${esc(x.geometry)}</div>` : "";
   return `<article class="card item p-${p}" style="--c:var(--${p === "high" ? "hi" : p === "medium" ? "me" : "lo"})">
     <div class="plain">
       <div class="hdr"><span class="pill p-${p}">${esc(x.priority)}</span><code>${esc(x.id)}</code><span class="loc">${esc(x.location)}</span></div>
       <p class="sum">${esc(x.summary)}</p>
       <p class="why">Why it matters: ${esc(x.reason)}</p>
-      <div class="valid">${esc(valid)}</div>
+      ${geo}<div class="valid">${esc(valid)}</div>
     </div>
     <pre>${esc(x.raw)}</pre></article>`;
 }
@@ -230,7 +232,7 @@ function render(d) {
   h += `</section>`;
   if (d.not_relevant.length) {
     h += `<details class="card"><summary>${d.not_relevant.length} ${d.prefilter ? "nearby" : ""} NOTAMs judged not relevant, with reasons</summary>
-      ${d.not_relevant.map(x => `<div class="nr"><div class="line"><code>${esc(x.id)}</code><span>${esc(x.location)}</span></div>
+      ${d.not_relevant.map(x => `<div class="nr"><div class="line"><code>${esc(x.id)}</code><span>${esc(x.location)}</span>${x.geometry ? `<span>· ${esc(x.geometry)}</span>` : ""}</div>
         <div>${esc(x.reason)}</div><details><summary>original</summary><pre>${esc(x.raw)}</pre></details></div>`).join("")}</details>`;
   }
   const u = m.usage, cost = m.cost_usd == null ? "n/a" : "$" + m.cost_usd.toFixed(m.cost_usd < 0.01 ? 5 : 4);
@@ -238,6 +240,7 @@ function render(d) {
     <div><b>Model</b>${esc(m.id)}${m.reasoning && m.reasoning !== "none" ? " (reasoning on)" : ""}</div>
     <div><b>Tokens in / out</b>${u.prompt_tokens.toLocaleString()} / ${u.completion_tokens.toLocaleString()}</div>
     <div><b>Cost</b>${cost}</div>
+    <div><b>Pre-filter</b>${d.timing.prefilter_ms} ms (${c.national} → ${c.candidates})</div>
     <div><b>Model latency</b>${m.latency_s} s${m.calls > 1 ? ` (${m.calls} calls)` : ""}</div>
     <div><b>Total</b>${d.timing.total_s} s</div>
     <div><b>Bulletins</b>${d.bulletins.map(b => `${esc(b.country)} ${esc(day(b.generated))} ${esc(hhmm(b.generated))}`).join(", ")}${d.source !== "live" ? ` (snapshot)` : ""}</div>

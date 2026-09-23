@@ -3,6 +3,7 @@
     python -m eval.bench                                          # default model, pre-filter on
     python -m eval.bench --models deepseek-ai/DeepSeek-V4-Flash-0731 other/model --modes prefilter full
     python -m eval.bench --reasoning none default                # reasoning off vs the model's default
+    python -m eval.bench --hints on off                           # with and without the computed route geometry
     python -m eval.bench --combine eval/results/A eval/results/B   # one summary for several runs
 
 Writes eval/results/<utc-stamp>/: one JSON per run, summary.csv and summary.md.
@@ -10,6 +11,7 @@ Recall is the metric that matters: a missed relevant NOTAM is the real failure.
 """
 import argparse
 import csv
+import hashlib
 import json
 import re
 import traceback
@@ -18,9 +20,10 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
-from briefing import config, pipeline
+from briefing import config, llm, pipeline
 
 RESULTS = config.EVAL / "results"
+KEYS = ("model", "mode", "hints", "reasoning", "prompt")
 
 
 def load_labels():
@@ -60,55 +63,68 @@ def fmt(v, pct=False):
     return f"{v:.0%}" if pct else (f"{v:.5f}" if isinstance(v, float) and v < 0.01 else f"{v:.3g}" if isinstance(v, float) else str(v))
 
 
+def _ms(v):
+    return f"{v:.1f} ms" if v is not None else "-"
+
+
 def summarise(rows):
     groups = defaultdict(list)
     for r in rows:
         if "error" not in r:
-            groups[(r["model"], r["mode"], r["reasoning"])].append(r)
+            groups[tuple(r[k] for k in KEYS)].append(r)
     agg = []
-    for (model, mode, reasoning), rs in groups.items():
+    for key, rs in groups.items():
         labelled, flagged, tp = (sum(r[k] for r in rs) for k in ("labelled", "flagged", "tp"))
         costs = [r["cost_usd"] for r in rs if r["cost_usd"] is not None]
-        agg.append({"model": model, "mode": mode, "reasoning": reasoning, "routes": len(rs),
-                    "recall": tp / labelled if labelled else None, "precision": tp / flagged if flagged else None,
-                    "items_to_read": flagged / len(rs), "sent_to_model": sum(r["sent"] for r in rs) / len(rs),
-                    "tokens_in": sum(r["tokens_in"] for r in rs) / len(rs),
-                    "tokens_out": sum(r["tokens_out"] for r in rs) / len(rs),
-                    "cost_usd": sum(costs) / len(costs) if costs else None,
-                    "latency_s": sum(r["latency_s"] for r in rs) / len(rs)})
+        pf = [r["prefilter_ms"] for r in rs if r.get("prefilter_ms") is not None]
+        agg.append(dict(zip(KEYS, key), routes=len(rs),
+                        recall=tp / labelled if labelled else None, precision=tp / flagged if flagged else None,
+                        items_to_read=flagged / len(rs), sent_to_model=sum(r["sent"] for r in rs) / len(rs),
+                        tokens_in=sum(r["tokens_in"] for r in rs) / len(rs),
+                        tokens_out=sum(r["tokens_out"] for r in rs) / len(rs),
+                        cost_usd=sum(costs) / len(costs) if costs else None,
+                        prefilter_ms=sum(pf) / len(pf) if pf else None,
+                        latency_s=sum(r["latency_s"] for r in rs) / len(rs)))
     return agg
 
 
 def write(outdir, rows):
-    cols = ["model", "mode", "reasoning", "route", "labelled", "flagged", "tp", "recall", "precision", "high_recall",
-            "priority_match", "sent", "tokens_in", "tokens_out", "cost_usd", "latency_s", "calls", "unassessed", "missed",
-            "false_pos", "unlabelled_flagged", "error"]
+    cols = ["model", "mode", "hints", "reasoning", "prompt", "route", "run", "labelled", "flagged", "tp", "recall", "precision",
+            "high_recall", "priority_match", "sent", "tokens_in", "tokens_out", "cost_usd", "prefilter_ms", "latency_s",
+            "calls", "unassessed", "missed", "false_pos", "unlabelled_flagged", "error"]
     with open(outdir / "summary.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
-    agg = summarise(rows)
     on_off = lambda mode: "on" if mode == "prefilter" else "off"
+    short = lambda m: m.split("/")[-1]
     md = ["# Benchmark results", "", f"Snapshot `{pipeline.eval_routes()['snapshot']}`, labels `eval/labels_flat.csv`. "
-          "Recall and precision are pooled over routes; the other columns are means per briefing. Latency is the "
-          "model stage only.", "",
-          "| Model | Pre-filter | Reasoning | Recall | Precision | Items to read | NOTAMs sent | Tokens in | Tokens out | Cost / briefing | Latency |",
-          "|---|---|---|---|---|---|---|---|---|---|---|"]
-    for a in agg:
-        md.append(f"| {a['model']} | {on_off(a['mode'])} | {a['reasoning']} | {fmt(a['recall'], 1)} | "
-                  f"{fmt(a['precision'], 1)} | {a['items_to_read']:.1f} | {a['sent_to_model']:.0f} | {a['tokens_in']:,.0f} | "
-                  f"{a['tokens_out']:,.0f} | {'$' + fmt(a['cost_usd']) if a['cost_usd'] is not None else '-'} | {a['latency_s']:.1f} s |")
+          "Recall and precision are pooled over routes; the other columns are means per briefing. *Hints* is the "
+          "computed route geometry given to the model; *Prompt* is the first 7 hex digits of the system prompt's SHA-1.",
+          "",
+          "| Model | Pre-filter | Hints | Reasoning | Prompt | Recall | Precision | Items to read | NOTAMs sent | "
+          "Tokens in | Tokens out | Cost / briefing | Pre-filter time | Model latency |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for a in summarise(rows):
+        md.append(f"| {short(a['model'])} | {on_off(a['mode'])} | {a['hints']} | {a['reasoning']} | {a['prompt']} | "
+                  f"{fmt(a['recall'], 1)} | {fmt(a['precision'], 1)} | {a['items_to_read']:.1f} | "
+                  f"{a['sent_to_model']:.0f} | {a['tokens_in']:,.0f} | {a['tokens_out']:,.0f} | "
+                  f"{'$' + fmt(a['cost_usd']) if a['cost_usd'] is not None else '-'} | {_ms(a['prefilter_ms'])} | "
+                  f"{a['latency_s']:.1f} s |")
     md += ["", "## Per route", "",
-           "| Model | Pre-filter | Reasoning | Route | Recall | Precision | Flagged / labelled | Missed | False positives | Tokens in/out | Cost | Latency |",
-           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+           "| Model | Pre-filter | Hints | Reasoning | Prompt | Route (run) | Recall | Precision | Flagged / labelled | "
+           "Missed | False positives | Tokens in/out | Cost | Pre-filter time | Model latency |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
+        head = (f"| {short(r['model'])} | {on_off(r['mode'])} | {r['hints']} | {r['reasoning']} | {r['prompt']} | "
+                f"{r['route']}{' (' + str(r['run']) + ')' if r.get('run') else ''} |")
         if "error" in r:
-            md.append(f"| {r['model']} | {on_off(r['mode'])} | {r['reasoning']} | {r['route']} | error: {r['error'][:80]} ||||||||")
+            md.append(f"{head} error: {r['error'][:80]} |||||||||")
             continue
-        md.append(f"| {r['model'].split('/')[-1]} | {on_off(r['mode'])} | {r['reasoning']} | {r['route']} | "
-                  f"{fmt(r['recall'], 1)} | {fmt(r['precision'], 1)} | {r['flagged']} / {r['labelled']} | "
+        md.append(f"{head} {fmt(r['recall'], 1)} | {fmt(r['precision'], 1)} | {r['flagged']} / {r['labelled']} | "
                   f"{r['missed'] or '-'} | {r['false_pos'] or '-'} | {r['tokens_in']:,} / {r['tokens_out']:,} | "
-                  f"{'$' + fmt(r['cost_usd']) if r['cost_usd'] is not None else '-'} | {r['latency_s']:.1f} s |")
+                  f"{'$' + fmt(r['cost_usd']) if r['cost_usd'] is not None else '-'} | {_ms(r.get('prefilter_ms'))} | "
+                  f"{r['latency_s']:.1f} s |")
     text = "\n".join(md) + "\n"
     (outdir / "summary.md").write_text(text, encoding="utf-8")
     (RESULTS / "latest.md").write_text(text.replace("# Benchmark results", f"# Benchmark results ({outdir.name})", 1),
@@ -116,9 +132,9 @@ def write(outdir, rows):
     return text
 
 
-NUMERIC = {"route": int, "labelled": int, "flagged": int, "tp": int, "recall": float, "precision": float,
+NUMERIC = {"route": int, "run": int, "labelled": int, "flagged": int, "tp": int, "recall": float, "precision": float,
            "high_recall": float, "priority_match": float, "sent": int, "tokens_in": int, "tokens_out": int,
-           "cost_usd": float, "latency_s": float, "calls": int, "unassessed": int}
+           "cost_usd": float, "prefilter_ms": float, "latency_s": float, "calls": int, "unassessed": int}
 
 
 def load_rows(d):
@@ -130,6 +146,8 @@ def load_rows(d):
                     r[k] = cast(r[k]) if r[k] != "" else None
             if not r.get("error"):
                 r.pop("error", None)
+            r.setdefault("hints", "off")  # runs from before the geometry hints existed
+            r.setdefault("prompt", "earlier")
             rows.append(r)
     return rows
 
@@ -139,12 +157,15 @@ def main():
     ap.add_argument("--combine", nargs="+", metavar="DIR", help="merge earlier result folders into one summary")
     ap.add_argument("--models", nargs="+", default=[config.DEFAULT_MODEL])
     ap.add_argument("--modes", nargs="+", default=["prefilter"], choices=["prefilter", "full"])
+    ap.add_argument("--hints", nargs="+", default=["off"], choices=["on", "off"],
+                    help="give the model each NOTAM's computed position relative to the route (pre-filter mode)")
     ap.add_argument("--routes", nargs="+", type=int, default=[1, 2, 3, 4, 5])
     ap.add_argument("--weather", action="store_true", help="include live METAR/TAF (off by default: not reproducible)")
     ap.add_argument("--chunk", type=int, default=80, help="NOTAMs per model request")
     ap.add_argument("--reasoning", nargs="+", default=[config.REASONING_EFFORT],
                     help="reasoning_effort values to compare, e.g. none default")
     ap.add_argument("--parallel", type=int, default=5, help="briefings run at once (use 1 for --modes full)")
+    ap.add_argument("--repeat", type=int, default=1, help="run every briefing this many times (outputs vary a little)")
     a = ap.parse_args()
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
@@ -154,20 +175,23 @@ def main():
         print(write(outdir, [r for d in a.combine for r in load_rows(d)]))
         return
     cfg, labels = pipeline.eval_routes(), load_labels()
+    prompt = hashlib.sha1(llm.SYSTEM_PROMPT.encode("utf-8")).hexdigest()[:7]
     outdir = RESULTS / stamp
     outdir.mkdir(parents=True)
-    jobs = [(model, mode, reasoning, r) for model in a.models for mode in a.modes for reasoning in a.reasoning
+    jobs = [(model, mode, hints, reasoning, r, i) for i in range(1, a.repeat + 1) for model in a.models
+            for mode in a.modes for hints in (a.hints if mode == "prefilter" else ["off"]) for reasoning in a.reasoning
             for r in cfg["routes"] if r["id"] in a.routes]
 
     def run(job):
-        model, mode, reasoning, r = job
-        base = {"model": model, "mode": mode, "reasoning": reasoning, "route": r["id"]}
+        model, mode, hints, reasoning, r, i = job
+        base = {"model": model, "mode": mode, "hints": hints, "reasoning": reasoning, "prompt": prompt, "route": r["id"],
+                "run": i}
         try:
             out = pipeline.brief(r["dep"], r["dest"], path=r["path"], route_note=r.get("note"),
                                  window=cfg["window"], band_fl=tuple(cfg["band_fl"]), corridor_nm=cfg["corridor_nm"],
                                  alt_ft=cfg["alt_ft"], model=model, source=cfg["snapshot"],
                                  use_prefilter=mode == "prefilter", with_weather=a.weather, chunk_size=a.chunk,
-                                 reasoning=reasoning)
+                                 reasoning=reasoning, hints=hints == "on")
         except Exception as e:
             traceback.print_exc()
             return dict(base, error=str(e))
@@ -176,12 +200,13 @@ def main():
         row = dict(base, **{k: (" ".join(v) if isinstance(v, list) else v) for k, v in s.items()},
                    sent=out["counts"]["candidates"], tokens_in=m["usage"]["prompt_tokens"],
                    tokens_out=m["usage"]["completion_tokens"], cost_usd=m["cost_usd"],
-                   latency_s=m["latency_s"], calls=m["calls"])
-        (outdir / f"{slug(model)}_{mode}_{reasoning}_route{r['id']}.json").write_text(
+                   prefilter_ms=out["timing"]["prefilter_ms"], latency_s=m["latency_s"], calls=m["calls"])
+        (outdir / f"{slug(model)}_{mode}_hints-{hints}_{reasoning}_route{r['id']}_run{i}.json").write_text(
             json.dumps(dict(out, score=s), indent=1, default=str), encoding="utf-8")
-        print(f"{slug(model):28} {mode:9} {reasoning:7} route {r['id']}: recall {fmt(row['recall'], 1):>4} "
-              f"precision {fmt(row['precision'], 1):>4} flagged {row['flagged']:>2}/{row['labelled']} "
-              f"missed [{row['missed']}] tokens {row['tokens_in']}/{row['tokens_out']} {m['latency_s']:.1f}s", flush=True)
+        print(f"{slug(model):24} {mode:9} hints {hints:3} {reasoning:7} route {r['id']} run {i}: "
+              f"recall {fmt(row['recall'], 1):>4} precision {fmt(row['precision'], 1):>4} "
+              f"flagged {row['flagged']:>2}/{row['labelled']} missed [{row['missed']}] "
+              f"prefilter {row['prefilter_ms']:.1f} ms, model {m['latency_s']:.1f} s", flush=True)
         return row
 
     with ThreadPoolExecutor(max_workers=max(1, a.parallel)) as pool:

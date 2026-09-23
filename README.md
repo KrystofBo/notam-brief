@@ -43,10 +43,22 @@ flowchart LR
    Bulletins, split them into FIR, section and aerodrome, and parse each NOTAM. The Q-line gives FIR, Q-code,
    traffic, purpose, scope, lower and upper limit, centre and radius. Items A, B, C and E and any schedule are
    parsed too. Live bulletins are cached for three hours.
-2. **Pre-filter** ([briefing/prefilter.py](briefing/prefilter.py)): keep a NOTAM when its circle comes
-   within its radius + 10 nm of the route, its altitude band overlaps the flight, and its validity overlaps
-   the flight window. Departure, destination and alternate NOTAMs are always kept. The margins are generous
-   because recall matters more than precision here.
+2. **Pre-filter** ([briefing/prefilter.py](briefing/prefilter.py), called from `brief()` in
+   [briefing/pipeline.py](briefing/pipeline.py)): plain Python in the app's own process. No model and no
+   network are involved. A NOTAM is kept when:
+   - its Q-line circle comes within its radius + 10 nm of the route,
+   - its altitude band overlaps the flight, and
+   - its validity overlaps the flight window.
+
+   Departure, destination and alternate NOTAMs are always kept. The margins are generous because recall
+   matters more than precision here.
+
+   Scanning all 945 NL + DE NOTAMs takes about **4.5 ms per route**, roughly 5 µs per NOTAM (see
+   [eval/results/prefilter_timing.md](eval/results/prefilter_timing.md), `python -m eval.time_prefilter`).
+   Parsing both bulletins takes 50 ms, once per refresh.
+
+   For every kept NOTAM the pre-filter also computes its position relative to the route, for example
+   *"circle centre 5.3 nm left of the track, abeam a point 6 nm after departure"*. The UI shows it on each card.
 3. **Weather** ([briefing/weather.py](briefing/weather.py)): METAR and TAF for departure and destination.
    Small fields without a METAR (EHHV, EHTE, EHHO, EHTX, EHTW) use the nearest reporting station.
 4. **Model stage** ([briefing/llm.py](briefing/llm.py), [prompts/system_prompt.md](prompts/system_prompt.md)):
@@ -64,17 +76,23 @@ flowchart LR
 DeepSeek-V4-Flash-0731 on Nebius Token Factory, on the five labelled routes (snapshot 2026-09-22).
 The full table is in [eval/results/latest.md](eval/results/latest.md).
 
-| Pre-filter | Reasoning | Recall | Precision | Items to read | NOTAMs sent | Cost / briefing | Model latency |
-|---|---|---|---|---|---|---|---|
-| on | off | **100%** | 63% | 7.6 | 30 | **$0.0014** | 14 s |
-| on | on | 96% | 79% | 5.8 | 30 | $0.0024 | 39 s |
-| off | off | 75% | 47% | 7.6 | 457 | $0.0167 | 36 s |
+| Pre-filter | Distance hints to model | Reasoning | Recall | Precision | Items to read | NOTAMs sent | Cost / briefing | Model latency |
+|---|---|---|---|---|---|---|---|---|
+| on | off | off | **100%** | 64% | 7.5 | 30 | **$0.0014** | 14 s |
+| on | on | off | 100% | 56% | 8.5 | 30 | $0.0016 | 14 s |
+| on | off | on | 96% | 79% | 5.8 | 30 | $0.0024 | 39 s |
+| off | off | off | 75% | 47% | 7.6 | 457 | $0.0167 | 36 s |
 
 - With the pre-filter and reasoning off, the model caught every labelled NOTAM. The pilot reads about 8 items
-  instead of 132 (NL) or 945 (NL + DE), at well under a cent per briefing.
+  instead of 132 (NL) or 945 (NL + DE), at well under a cent per briefing. The pre-filter itself takes about
+  4.5 ms.
 - Without the pre-filter, recall falls to 75%. On the cross-border route 4 the model missed all five wind farms
   near the track, and it cost 12 times as much. The geometric pre-filter does work the model cannot do reliably
   from raw coordinates.
+- Giving the model each NOTAM's computed distance from the route (3 runs per setting) did not help. It made the
+  model flag items it had rightly ignored, such as offshore wind farms 8-11 nm away, and it still flagged
+  obstacles 5-8 nm off track despite a 5 nm rule. The distance is shown to the pilot but is off for the model by
+  default (`--hints on` to test it). A fixed distance cut-off belongs in the deterministic pre-filter.
 - Turning reasoning on makes the output shorter, but it is 3 times slower and missed one LOW item.
   Reasoning is off by default (`BRIEFING_REASONING_EFFORT`).
 
@@ -94,6 +112,8 @@ These results are measured against **draft labels** that still need to be checke
 ```bash
 python -m eval.bench                                            # default model, pre-filter on
 python -m eval.bench --models deepseek-ai/DeepSeek-V4-Flash-0731 <other-model> --modes prefilter full
+python -m eval.bench --hints on off --repeat 3 --parallel 10    # distance hints A/B, 3 runs each
+python -m eval.time_prefilter                                   # pre-filter timing only, no model
 ```
 
 For each route the benchmark reports:

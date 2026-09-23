@@ -8,6 +8,13 @@ The user message contains:
 - FLIGHT: departure, destination, optional alternate, route description or waypoints, planned departure and arrival times in UTC, planned altitude band, aircraft type and category, and flight rules (VFR).
 - WEATHER: METAR and TAF for the departure, destination and nearby stations. It may be empty.
 - NOTAMS: raw ICAO NOTAMs. Each has an id, a Q) line (FIR / Q-code / traffic / purpose / scope / lower / upper / centre and radius), A) location, B) start, C) end ("EST" means estimated, "PERM" means permanent), an optional schedule (D) or SCHEDULE), E) text, and optional LOWER/UPPER.
+- A NOTAM may have a line `ROUTE GEOMETRY (computed, not part of the NOTAM): ...` directly under its id. The pre-filter computes it from the Q-line centre and radius and the planned route. It says one of these:
+  - the NOTAM belongs to the departure, destination or alternate aerodrome
+  - how far the circle centre is from the track, on which side, and how far along the route
+  - whether the route passes through the circle
+  - that the NOTAM is wide-area, where the circle only bounds a region and the E) text decides where it applies
+
+  Use this line to judge proximity instead of working out distances from raw coordinates yourself. Q-line positions are rounded to whole minutes, so the distances are good to about 1 nm.
 
 # How to judge relevance
 
@@ -27,6 +34,7 @@ Mark it NOT relevant when:
 - It concerns an aerodrome that is not the departure, destination or alternate. Examples are ground movement, stands and taxiway lights at a major airport the route only passes near.
 - It is a failed obstacle light, and the flight is entirely in daylight and the obstacle is not a hazard to the track. If any part of the flight is within 30 minutes of sunset or at night, treat obstacle lighting as relevant.
 - It is offshore (rigs, wind farms, helidecks, flaring) and the planned track stays over land or the coastline, well clear of it.
+- It is a point obstacle (crane, mast, tower, wind turbine or wind farm, or a failure of its lights) that is more than 5 nm from the track and more than 5 nm from the departure, destination and alternate. Being inside the altitude band does not make a distant obstacle relevant.
 - It is a country-wide security advisory or policy notice about distant regions or airline operations.
 - It is administrative and does not affect how the flight is conducted. One exception: changed contact details at the departure or destination aerodrome are relevant at LOW priority, because the pilot may need to phone for PPR.
 

@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 FIRS = {"NL": {"EHAA"}, "DE": {"EDWW", "EDGG", "EDMM", "EDXX"}}
+WIDE_AREA_NM = 25  # Q-line circles this big bound a region; their centre says little about where the NOTAM applies
 
 
 def country_of(code):
@@ -67,16 +68,56 @@ def _xy(lat, lon, lat0):
     return lon * 60 * math.cos(math.radians(lat0)), lat * 60  # nm, flat-earth local projection
 
 
-def dist_to_path_nm(lat, lon, pts):
+def route_position(lat, lon, pts):
+    """Where a point lies relative to the route polyline.
+
+    Returns (cross-track nm, along-track nm from departure, side, where): side is 'left' or 'right' of
+    the direction of flight; where is 'start' or 'end' if the nearest route point is the departure or
+    the destination itself, else 'abeam'."""
     lat0 = pts[0][0]
     px, py = _xy(lat, lon, lat0)
-    best = 1e9
-    for a, b in zip(pts, pts[1:]):
+    best, done, last = None, 0.0, len(pts) - 2
+    for i, (a, b) in enumerate(zip(pts, pts[1:])):
         (ax, ay), (bx, by) = _xy(*a, lat0), _xy(*b, lat0)
         dx, dy = bx - ax, by - ay
         t = max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / ((dx * dx + dy * dy) or 1)))
-        best = min(best, math.hypot(px - ax - t * dx, py - ay - t * dy))
+        d = math.hypot(px - ax - t * dx, py - ay - t * dy)
+        if best is None or d < best[0]:
+            where = "start" if (i == 0 and t == 0) else "end" if (i == last and t == 1) else "abeam"
+            cross = dx * (py - ay) - dy * (px - ax)  # > 0: left of the direction of flight
+            best = (d, done + t * math.hypot(dx, dy), "left" if cross > 0 else "right", where)
+        done += math.hypot(dx, dy)
     return best
+
+
+def dist_to_path_nm(lat, lon, pts):
+    return route_position(lat, lon, pts)[0]
+
+
+def geometry(n, f):
+    """Where a NOTAM sits relative to the flight, in words, for the model and the pilot."""
+    a = set(n.get("a") or [])
+    for code, role in ((f.dep, "departure"), (f.dest, "destination"), (f.alternate, "alternate")):
+        if code and code in a:
+            return f"at the {role} aerodrome {code}"
+    if n.get("lat") is None:
+        return None
+    r = n["radius_nm"]
+    if r >= 999:
+        return "covers the whole FIR"
+    if r >= WIDE_AREA_NM:
+        return (f"wide-area NOTAM: its Q-line circle (radius {r} nm) only bounds a large region, "
+                f"so judge from the E) text whether it applies to this route")
+    d, along, side, where = route_position(n["lat"], n["lon"], f.points)
+    if where == "start":
+        pos = f"circle centre {d:.1f} nm from the departure aerodrome {f.dep}"
+    elif where == "end":
+        pos = f"circle centre {d:.1f} nm from the destination aerodrome {f.dest}"
+    elif d < 0.5:
+        pos = f"circle centre on the track, {along:.0f} nm after departure"
+    else:
+        pos = f"circle centre {d:.1f} nm {side} of the track, abeam a point {along:.0f} nm after departure"
+    return pos + f"; radius {r} nm" + ("; the route passes through the circle" if d <= r else "")
 
 
 def schedule_note(sched, f):
