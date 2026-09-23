@@ -112,7 +112,8 @@ def brief(dep, dest, *, via=(), alternate=None, dep_time=None, window=None, alt_
     items = []
     for i, (n, r) in enumerate(zip(cands, res["items"])):
         items.append(dict(r, order=i, raw=n["raw"], location=_location(n), keep_reason=n["keep_reason"],
-                          geometry=n.get("geometry"), schedule=n.get("schedule"), schedule_note=n.get("schedule_note"),
+                          geometry=n.get("geometry"), lat=n.get("lat"), lon=n.get("lon"), radius_nm=n.get("radius_nm"),
+                          schedule=n.get("schedule"), schedule_note=n.get("schedule_note"),
                           valid_from=_iso(n.get("valid_from")), valid_to=_iso(n.get("valid_to")),
                           valid_to_raw=n.get("c")))
     relevant = sorted((x for x in items if x["relevant"]), key=lambda x: (PRI[x["priority"]], x["order"]))
