@@ -21,11 +21,10 @@ Germany.
 
 It supports the pilot's decision; the pilot in command still makes it.
 
-![NOTAM Brief showing a live briefing from Lelystad to Hilversum via Hamburg and Berlin: a route map with the NOTAM areas, the count going from 951 NOTAMs to 158 near the route to 10 that affect the flight, a Listen button, and the first high-priority NOTAM card](docs/screenshot.png)
+![NOTAM Brief showing a live briefing from Lelystad to Hilversum: a route map with the NOTAM areas at both airfields, the count going from 132 NOTAMs to 25 near the route to 8 that affect the flight, a Listen button, the weather summary, and the first high-priority NOTAM card](docs/screenshot.png)
 
-*A live briefing from Lelystad to Hilversum via Hamburg and Berlin. The Dutch and German bulletins held 951
-NOTAMs, 158 were near the route, height and time, and 10 affect the flight. The weather service timed out on this
-run, and the app says so rather than hiding it.*
+*A live briefing from Lelystad to Hilversum. The Dutch bulletin held 132 NOTAMs, 25 were near the route, height
+and time, and 8 affect the flight: 4 high, 3 medium and 1 low priority.*
 
 ## About this project
 
