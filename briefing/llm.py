@@ -1,5 +1,5 @@
-"""Model stage: OpenAI-compatible chat completions on Nebius Token Factory, or on our own vLLM deployment on
-Modal for model ids prefixed 'modal:' (see modal_app/vllm_qwen.py).
+"""Model stage: OpenAI-compatible chat completions on Nebius Token Factory, or on a Modal Shared Endpoint
+for model ids prefixed 'modal:' (e.g. modal:deepseek-ai/DeepSeek-V4.1-Flash).
 
 Each request carries the system prompt, the flight, the weather and a chunk of NOTAMs, and asks
 for strict JSON: one item per NOTAM with relevant / priority / reason / summary.
@@ -42,10 +42,13 @@ def schema(ids):
             "required": ["weather_summary", "items"], "additionalProperties": False}
 
 
+MODAL_REASONING = {"deepseek-ai/DeepSeek-V4.1-Flash", "moonshotai/Kimi-K3"}  # Shared Endpoint models that think
+
+
 def supports_reasoning(model):
     provider, name = config.split_model(model)
-    if provider != "nebius":
-        return False
+    if provider == "modal":
+        return name in MODAL_REASONING
     try:
         return "reasoning" in ((models_info().get(name) or {}).get("supported_features") or [])
     except Exception:
@@ -174,10 +177,10 @@ def models_info():
 
 
 def price(model):
-    """USD per 1M tokens (input, output). None for our Modal deployment, which is billed per GPU-second."""
+    """USD per 1M tokens (input, output)."""
     provider, name = config.split_model(model)
     if provider != "nebius":
-        return None
+        return config.PRICES.get(model)
     try:
         p = (models_info().get(name) or {}).get("pricing") or {}
         pin, pout = float(p.get("prompt") or 0), float(p.get("completion") or 0)

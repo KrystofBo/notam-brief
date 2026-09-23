@@ -17,14 +17,18 @@ except ImportError:
 load_dotenv(ROOT / ".env")
 
 NEBIUS_BASE_URL = os.environ.get("NEBIUS_BASE_URL", "https://api.tokenfactory.nebius.com/v1").rstrip("/")
+MODAL_BASE_URL = os.environ.get("MODAL_BASE_URL", "https://inference.us-west.modal.direct/v1").rstrip("/")
 DEFAULT_MODEL = os.environ.get("BRIEFING_MODEL", "deepseek-ai/DeepSeek-V4-Flash-0731")
 # Sent as reasoning_effort to models that support it. "none" turns thinking off (about 4x fewer output
 # tokens and much faster); "default" leaves the model's own reasoning on.
 REASONING_EFFORT = os.environ.get("BRIEFING_REASONING_EFFORT", "none")
 
-# USD per 1M tokens (input, output). Used when /v1/models does not report pricing.
+# USD per 1M tokens (input, output). Token Factory prices come from /v1/models when it reports them;
+# Modal Shared Endpoint prices are from the Modal Library pages (Sep 2026; cached input is cheaper).
 PRICES = {
     "deepseek-ai/DeepSeek-V4-Flash-0731": (0.14, 0.28),
+    "modal:deepseek-ai/DeepSeek-V4.1-Flash": (0.30, 1.20),
+    "modal:moonshotai/Kimi-K3": (3.00, 15.00),
 }
 
 
@@ -61,7 +65,8 @@ def endpoint(provider):
     if provider == "nebius":
         return NEBIUS_BASE_URL, {"Authorization": f"Bearer {api_key()}"}
     if provider == "modal":
-        # Our own vLLM deployment (modal_app/vllm_qwen.py), protected by a Modal proxy-auth token.
-        return (env("MODAL_BASE_URL").rstrip("/") + "/v1",
-                {"Modal-Key": env("MODAL_KEY"), "Modal-Secret": env("MODAL_SECRET")})
+        # Modal Shared Endpoints (managed, per token). Create one per model in the dashboard's Endpoints tab;
+        # requests carry a workspace proxy token as "Bearer wk-<id>.ws-<secret>".
+        key, secret = env("MODAL_KEY"), env("MODAL_SECRET")
+        return MODAL_BASE_URL, {"Authorization": f"Bearer {key}.{secret}"}
     raise ValueError(f"Unknown provider {provider!r}")
