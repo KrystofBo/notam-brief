@@ -1,4 +1,5 @@
-"""Model stage on Nebius Token Factory (OpenAI-compatible chat completions).
+"""Model stage: OpenAI-compatible chat completions on Nebius Token Factory, or on our own vLLM deployment on
+Modal for model ids prefixed 'modal:' (see modal_app/vllm_qwen.py).
 
 Each request carries the system prompt, the flight, the weather and a chunk of NOTAMs, and asks
 for strict JSON: one item per NOTAM with relevant / priority / reason / summary.
@@ -42,23 +43,33 @@ def schema(ids):
 
 
 def supports_reasoning(model):
+    provider, name = config.split_model(model)
+    if provider != "nebius":
+        return False
     try:
-        return "reasoning" in ((models_info().get(model) or {}).get("supported_features") or [])
+        return "reasoning" in ((models_info().get(name) or {}).get("supported_features") or [])
     except Exception:
         return False
 
 
-def chat(model, messages, response_format=None, max_tokens=32000, reasoning_effort=None):
-    body = {"model": model, "messages": messages, "temperature": 0, "max_tokens": max_tokens}
+def request_body(model, messages, response_format=None, max_tokens=32000, reasoning_effort=None):
+    """(URL, headers, JSON body) for a chat completion on the model's provider."""
+    provider, name = config.split_model(model)
+    base, headers = config.endpoint(provider)
+    body = {"model": name, "messages": messages, "temperature": 0, "max_tokens": max_tokens}
     if response_format:
         body["response_format"] = response_format
     if reasoning_effort and supports_reasoning(model):
         body["reasoning_effort"] = reasoning_effort  # "none" turns DeepSeek's thinking off
-    headers = {"Authorization": f"Bearer {config.api_key()}"}
+    return f"{base}/chat/completions", headers, body
+
+
+def chat(model, messages, response_format=None, max_tokens=32000, reasoning_effort=None):
+    url, headers, body = request_body(model, messages, response_format, max_tokens, reasoning_effort)
     t0 = time.perf_counter()
     for attempt in range(6):
         try:
-            r = requests.post(f"{config.NEBIUS_BASE_URL}/chat/completions", json=body, headers=headers, timeout=600)
+            r = requests.post(url, json=body, headers=headers, timeout=1200)
         except requests.RequestException as e:
             raise LLMError(f"request failed: {e}") from e
         if r.status_code in (429, 502, 503, 504) and attempt < 5:
@@ -163,15 +174,18 @@ def models_info():
 
 
 def price(model):
-    """USD per 1M tokens (input, output)."""
+    """USD per 1M tokens (input, output). None for our Modal deployment, which is billed per GPU-second."""
+    provider, name = config.split_model(model)
+    if provider != "nebius":
+        return None
     try:
-        p = (models_info().get(model) or {}).get("pricing") or {}
+        p = (models_info().get(name) or {}).get("pricing") or {}
         pin, pout = float(p.get("prompt") or 0), float(p.get("completion") or 0)
         if pin or pout:
             return pin * 1e6, pout * 1e6  # the API reports USD per token
     except Exception:
         pass
-    return config.PRICES.get(model)
+    return config.PRICES.get(name)
 
 
 def assess(model, flight_block, weather_text, notams, chunk_size=80, workers=4, reasoning_effort=None):

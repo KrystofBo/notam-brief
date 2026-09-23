@@ -28,18 +28,40 @@ PRICES = {
 }
 
 
-def api_key():
-    if not os.environ.get("NEBIUS_API_KEY"):
-        load_dotenv(ROOT / ".env")  # .env may have been created after start-up
-    key = os.environ.get("NEBIUS_API_KEY")
-    if not key and os.name == "nt":
-        # `setx` only reaches new processes; read the user environment directly.
+def env(name):
+    """A setting from the environment, .env (which may have been edited after start-up) or, on Windows, the
+    user environment (`setx` only reaches new processes)."""
+    if not os.environ.get(name):
+        load_dotenv(ROOT / ".env")
+    val = os.environ.get(name)
+    if not val and os.name == "nt":
         import winreg
         try:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as k:
-                key = winreg.QueryValueEx(k, "NEBIUS_API_KEY")[0]
+                val = winreg.QueryValueEx(k, name)[0]
         except OSError:
-            key = None
-    if not key:
-        raise RuntimeError("NEBIUS_API_KEY is not set. Add it to .env or your environment.")
-    return key
+            val = None
+    if not val:
+        raise RuntimeError(f"{name} is not set. Add it to .env or your environment.")
+    return val
+
+
+def api_key():
+    return env("NEBIUS_API_KEY")
+
+
+def split_model(model):
+    """'modal:Qwen/Qwen3-...' -> ('modal', 'Qwen/Qwen3-...'). A bare id is a Token Factory model."""
+    head, sep, rest = model.partition(":")
+    return (head, rest) if sep and "/" not in head else ("nebius", model)
+
+
+def endpoint(provider):
+    """(OpenAI-compatible base URL ending in /v1, auth headers) for a provider."""
+    if provider == "nebius":
+        return NEBIUS_BASE_URL, {"Authorization": f"Bearer {api_key()}"}
+    if provider == "modal":
+        # Our own vLLM deployment (modal_app/vllm_qwen.py), protected by a Modal proxy-auth token.
+        return (env("MODAL_BASE_URL").rstrip("/") + "/v1",
+                {"Modal-Key": env("MODAL_KEY"), "Modal-Secret": env("MODAL_SECRET")})
+    raise ValueError(f"Unknown provider {provider!r}")
