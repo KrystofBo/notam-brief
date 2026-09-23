@@ -4,138 +4,297 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NOTAM Brief</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%231f5fd6'/%3E%3Cpath d='M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z' fill='none' stroke='white' stroke-width='1.6' transform='scale(.8) translate(3 3)'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
-  --bg:#f5f5f2;--card:#fff;--fg:#1b1d20;--mut:#62666c;--faint:#8a8e94;--line:#e1e1dc;--code:#f1f1ec;--accent:#1f5fbf;--accent-fg:#fff;
-  --hi:#b83227;--hi-bg:#fbebe9;--me:#a86a12;--me-bg:#fcf3e3;--lo:#3f6aa8;--lo-bg:#ebf1f9;--ok:#2f7d4f;--warn-bg:#fff4d6;--warn:#8a5a00;
-  --shadow:0 1px 2px rgba(0,0,0,.05);
+  color-scheme:light dark;
+  --bg:#f3f4f6;--surface:#fff;--surface-2:#f7f8fa;--line:#e2e5ea;--fg:#14171c;--mut:#596170;--faint:#8a919c;
+  --accent:#1f5fd6;--accent-fg:#fff;--accent-soft:#e8f0fd;
+  --hi:#c93a2e;--hi-bg:#fdeceb;--me:#b36b00;--me-bg:#fff3df;--lo:#2e6bb8;--lo-bg:#eaf1fb;
+  --warn:#8a5a00;--warn-bg:#fff5d9;--shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);--r:14px;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#141619;--card:#1c1f23;--fg:#e8e8e5;--mut:#a2a6ac;--faint:#7c8086;--line:#30343a;--code:#15171a;--accent:#6ea2ff;--accent-fg:#0d1117;
-  --hi:#f2796c;--hi-bg:#3a211e;--me:#e8b560;--me-bg:#362b18;--lo:#90b3e6;--lo-bg:#1d2837;--ok:#6cc596;--warn-bg:#3a3018;--warn:#f0c667;
-  --shadow:none;
+  --bg:#0e1116;--surface:#161a21;--surface-2:#1c212a;--line:#272d37;--fg:#e8eaed;--mut:#a5acb8;--faint:#7d8592;
+  --accent:#6ea4ff;--accent-fg:#0b1220;--accent-soft:#1a2740;
+  --hi:#ff7a6e;--hi-bg:#361c1a;--me:#f3b45a;--me-bg:#352812;--lo:#8db8f5;--lo-bg:#18263a;
+  --warn:#f2c86a;--warn-bg:#352c14;--shadow:none;
 }}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:1180px;margin:0 auto;padding:20px 16px 72px}
-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-header h1{font-size:22px;margin:0;display:flex;align-items:center;gap:8px}
-header .tag{color:var(--mut);font-size:14px}
-header .disc{margin-left:auto;font-size:12px;color:var(--faint);max-width:330px;text-align:right}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
-form.card{padding:16px}
-.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
-.f{display:flex;flex-direction:column;gap:4px;min-width:0}
-.f label{font-size:12px;color:var(--mut);font-weight:600;letter-spacing:.02em}
-.f input,.f select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);min-width:0}
-.f input:focus,.f select:focus{outline:2px solid var(--accent);outline-offset:-1px}
-.span2{grid-column:span 2}.span3{grid-column:span 3}
-.code-in{text-transform:uppercase;font-family:ui-monospace,Consolas,monospace}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px}
+code,pre,.mono{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace}
+h2,h3,h4{letter-spacing:-.01em}
+
+/* Top bar and search */
+.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:16px;min-height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--fg);text-decoration:none;white-space:nowrap}
+.logo{width:32px;height:32px;border-radius:9px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center}
+.tagline{color:var(--mut);font-size:14px}
+.user{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:14px;color:var(--mut)}
+.search{padding-top:4px;padding-bottom:18px}
+.fields{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld>span{font-size:12px;font-weight:600;color:var(--mut)}
+input,select{font:inherit;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.code input{width:108px;text-transform:uppercase;font:600 16px/1.3 ui-monospace,"Cascadia Mono",Consolas,monospace;letter-spacing:.06em}
+.upper{text-transform:uppercase}
+.arrow{padding-bottom:10px;color:var(--faint);font-size:18px}
+.btn{font:inherit;font-weight:600;border-radius:10px;padding:10px 18px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.6;cursor:progress}
+.btn.link{border:0;background:none;padding:0;color:var(--accent)}
+.btn.google{background:#fff;color:#1f1f1f;border-color:#dadce0;padding:11px 20px}
+.options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.options .wide{grid-column:span 2}
+.options input,.options select{background:var(--surface)}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--mut);align-self:end;padding-bottom:10px}
 .presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
-.presets span{font-size:12px;color:var(--mut);font-weight:600;margin-right:2px}
-.chip{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
-.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.actions{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
-.toggle{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mut)}
-button.go{font:inherit;font-weight:600;background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:10px 20px;cursor:pointer}
-button.go:disabled{opacity:.6;cursor:progress}
-#status{color:var(--mut);font-size:14px}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite;vertical-align:-2px;margin-right:6px}
-@keyframes s{to{transform:rotate(360deg)}}
-#out{margin-top:22px}
-.err{padding:14px 16px;border-color:var(--hi);color:var(--hi);background:var(--hi-bg)}
-.routeline{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:0 0 12px}
-.routeline h2{font-size:20px;margin:0}.routeline .meta{color:var(--mut);font-size:14px}
-.funnel{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-.stat{padding:14px 16px}.stat .n{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
-.stat .l{color:var(--mut);font-size:13px}.stat.key .n{color:var(--accent)}
-.pris{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
-.pill{font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:4px}
+.presets>span{font-size:12px;font-weight:600;color:var(--mut);margin-right:4px}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip b{color:var(--mut);margin-right:4px}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip.on b{color:var(--accent)}
+
+/* Shared */
+main{padding-top:24px;padding-bottom:40px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.small{font-size:13px;color:var(--faint)}
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;padding:3px 8px;border-radius:6px;background:var(--cb);color:var(--c)}
 .p-high{--c:var(--hi);--cb:var(--hi-bg)}.p-medium{--c:var(--me);--cb:var(--me-bg)}.p-low{--c:var(--lo);--cb:var(--lo-bg)}
-.pill{background:var(--cb);color:var(--c)}
-.voice{padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
-.voice audio{height:34px}.voice p{flex-basis:100%;margin:0}
-.wx{padding:14px 16px;margin-bottom:16px}
-.wx h3,.sec h3{font-size:14px;margin:0 0 6px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
-.wx p{margin:0 0 10px}
-.wx .st{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px}
-.wx .st div{background:var(--code);border-radius:7px;padding:8px 10px}
-.wx .st b{font-size:13px}.wx .st small{color:var(--faint)}
-pre,.mono{font:12px/1.45 ui-monospace,Consolas,monospace}
-.wx pre{margin:4px 0 0;white-space:pre-wrap;word-break:break-word;color:var(--mut)}
-.warnbox{padding:12px 16px;margin-bottom:16px;background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
-.item{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);border-left:4px solid var(--c);margin-bottom:10px;overflow:hidden}
-.item .plain{padding:12px 14px}
-.item .hdr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
-.item .hdr code{font-size:13px;font-weight:600}.item .hdr .loc{color:var(--mut);font-size:13px}
-.item .sum{margin:6px 0 4px;font-size:15px}
-.item .why{color:var(--mut);font-size:13px;margin:0}
-.item .valid{color:var(--faint);font-size:12px;margin-top:6px}
-.item .geo{color:var(--mut);font-size:12px;margin-top:6px}
-.item pre{margin:0;padding:12px 14px;background:var(--code);border-left:1px solid var(--line);white-space:pre-wrap;word-break:break-word;color:var(--mut)}
-.sec{margin-top:18px}
-details.card{padding:10px 14px;margin-top:14px}
-details summary{cursor:pointer;color:var(--mut);font-weight:600}
-.nr{border-top:1px solid var(--line);padding:8px 0}.nr:first-of-type{border-top:0}
-.nr .line{display:flex;gap:10px;flex-wrap:wrap;font-size:13px}.nr .line code{font-weight:600}.nr .line span{color:var(--mut)}
-.nr details summary{font-weight:400;font-size:12px;color:var(--faint)}
-.nr pre{white-space:pre-wrap;word-break:break-word;color:var(--mut);background:var(--code);padding:8px 10px;border-radius:6px;margin:6px 0 0}
-.foot{margin-top:18px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.foot div{font-size:13px}.foot b{display:block;font-size:12px;color:var(--mut);font-weight:600}
-.small{color:var(--faint);font-size:12px;margin-top:10px}
-.empty{padding:14px 16px;color:var(--mut)}
-@media (max-width:860px){.grid{grid-template-columns:repeat(2,1fr)}.span2,.span3{grid-column:span 2}
-  .item{grid-template-columns:1fr}.item pre{border-left:0;border-top:1px solid var(--line)}.funnel{grid-template-columns:1fr}
-  header .disc{margin-left:0;text-align:left}}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+details>summary{cursor:pointer;color:var(--mut);font-weight:600;font-size:14px}
+pre{white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.5;color:var(--mut);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0 0}
+
+/* Welcome, sign-in, loading, errors */
+.hero{padding:28px}
+.hero h2{font-size:24px;margin:0 0 8px}
+.hero>p{margin:0;color:var(--mut);max-width:760px}
+.steps{list-style:none;counter-reset:s;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:0;margin:22px 0 0}
+.steps li{counter-increment:s;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.steps li::before{content:counter(s);display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:13px;margin-bottom:8px}
+.steps b{display:block}.steps span{color:var(--mut);font-size:14px}
+.gate{max-width:520px;margin:48px auto;padding:36px;text-align:center}
+.gate .logo{width:52px;height:52px;border-radius:14px;margin:0 auto 16px}
+.gate h2{margin:0 0 8px;font-size:22px}
+.gate p{color:var(--mut);margin:0 0 22px}
+.gate-msg{color:var(--hi)!important;margin-top:14px!important}
+.loading{padding:22px 24px;color:var(--mut)}
+.skel{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--surface-2),var(--line),var(--surface-2));background-size:200% 100%;animation:shimmer 1.4s infinite;margin-top:16px}
+.skel.short{width:60%}
+@keyframes shimmer{to{background-position:-200% 0}}
+.error{padding:18px 20px;border-color:var(--hi);background:var(--hi-bg);color:var(--hi)}
+.error p{margin:6px 0 0;color:var(--fg)}
+.warn{padding:16px 18px;margin-bottom:16px;border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+
+/* Briefing */
+.route{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:16px}
+.route h2{font-size:22px;margin:0}
+.route h2 span{font-weight:500;color:var(--mut)}
+.route h2 i{font-style:normal;color:var(--faint);margin:0 4px}
+.route p{margin:0;color:var(--mut);font-size:14px}
+.overview{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,1fr);gap:16px;margin-bottom:24px}
+.map-card{overflow:hidden;min-height:420px}
+#map{height:100%;min-height:420px}
+.glance{padding:18px 20px;display:flex;flex-direction:column;gap:16px}
+.funnel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.funnel div{display:flex;flex-direction:column}
+.funnel b{font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.funnel span{font-size:12.5px;color:var(--mut);line-height:1.35;margin-top:4px}
+.funnel .key b{color:var(--accent)}
+.pris{display:flex;flex-wrap:wrap;gap:6px}
+.stats{font-size:13px;color:var(--faint);margin-top:-8px}
+.listen{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:10px}
+.listen audio{width:100%;height:40px}
+.listen details p{margin:8px 0 0;font-size:14px;color:var(--mut)}
+.vstatus{font-size:14px;color:var(--mut)}
+.wx{border-top:1px solid var(--line);padding-top:16px}
+.wx h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.wx>p{margin:0 0 8px;font-size:14px}
+.wx .st{margin-top:10px}.wx .st small{color:var(--faint)}
+.group{display:flex;align-items:center;gap:10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:26px 0 10px}
+.group:first-child{margin-top:0}
+.group .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.group .n{font-size:12px;background:var(--cb);color:var(--c);border-radius:999px;padding:1px 8px;letter-spacing:0}
+.item{position:relative;padding:16px 18px 14px 22px;margin-bottom:10px;overflow:hidden;scroll-margin:90px}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.item header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-bottom:8px}
+.item header .loc{font-size:13px;color:var(--mut);font-weight:600}
+.item header code{margin-left:auto;font-size:12.5px;color:var(--faint)}
+.item .sum{margin:0;font-size:16px;line-height:1.5}
+.item .why{margin:6px 0 0;color:var(--mut);font-size:14px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 22px;margin:10px 0 0;font-size:13px}
+.facts div{display:flex;gap:6px}.facts dt{color:var(--faint);font-weight:600}.facts dd{margin:0;color:var(--mut)}
+.raw{margin-top:10px}.raw summary{font-size:13px}
+.item.flash{animation:flash 1.8s ease-out}
+@keyframes flash{0%,30%{box-shadow:0 0 0 3px var(--c)}100%{box-shadow:var(--shadow)}}
+.empty{padding:18px 20px;color:var(--mut)}
+.more,.hood{padding:14px 18px;margin-top:14px}
+.nr{border-top:1px solid var(--line);padding:12px 0 10px}
+.nr:first-of-type{margin-top:10px}
+.nr-head{display:flex;flex-wrap:wrap;gap:10px;font-size:13px}.nr-head code{font-weight:600}.nr-head span{color:var(--mut)}
+.nr p{margin:4px 0 0;font-size:14px}
+.nr details summary{font-weight:500;font-size:12.5px;color:var(--faint);margin-top:4px}
+.hood-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:12px;font-size:13.5px}
+.hood-grid b{display:block;font-size:12px;color:var(--mut)}
+.foot{padding-bottom:40px;text-align:center;font-size:12.5px;color:var(--faint)}
+
+/* Map */
+.leaflet-container{font:inherit;background:var(--surface-2)}
+.leaflet-tile-pane{filter:saturate(.45) contrast(.95)}  /* calmer base map, so the NOTAM areas stand out */
+@media (prefers-color-scheme:dark){.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.8) contrast(.9) saturate(.35)}}
+.leaflet-tooltip{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);font-size:12.5px;white-space:normal;width:max-content;max-width:320px}
+.leaflet-tooltip-top:before{border-top-color:var(--surface)}
+.leaflet-tooltip.wp{font-weight:700;padding:2px 7px;width:auto}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--surface);color:var(--fg);border-color:var(--line)}
+.leaflet-control-attribution{background:var(--surface)!important;color:var(--faint);opacity:.85}
+.leaflet-control-attribution a{color:var(--mut)}
+
+@media (max-width:900px){
+  .tagline{display:none}
+  .overview{grid-template-columns:1fr}
+  .map-card,#map{min-height:300px}
+  .options{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .fields{display:grid;grid-template-columns:1fr auto 1fr;gap:10px}
+  .code input{width:100%}
+  .fld.time,.fields .btn{grid-column:1/-1}
+  .options{grid-template-columns:1fr}.options .wide{grid-column:auto}
+  .funnel b{font-size:24px}
+  .item header code{margin-left:0}
+}
 </style>
 </head>
 <body>
-<main>
-<header>
-  <h1><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>NOTAM Brief</h1>
-  <span class="tag">Only the NOTAMs that affect your VFR flight, explained in plain language.</span>
-  <span class="disc">Decision support, not an official briefing. Source: EAD-derived bulletins (notaminfo.com) and aviationweather.gov. The pilot in command decides.</span>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="/"><span class="logo" id="logo"></span>NOTAM Brief</a>
+    <span class="tagline">Route-specific NOTAMs for VFR flights in the Netherlands and Germany</span>
+    <div class="user" id="user" hidden><span id="user-email"></span><button type="button" class="btn link" id="signout">Sign out</button></div>
+  </div>
+  <form class="wrap search" id="f" autocomplete="off" hidden>
+    <div class="fields">
+      <label class="fld code"><span>From</span><input id="dep" list="ads" required maxlength="4" placeholder="EHLE"></label>
+      <span class="arrow" aria-hidden="true">→</span>
+      <label class="fld code"><span>To</span><input id="dest" list="ads" required maxlength="4" placeholder="EHHV"></label>
+      <label class="fld time"><span>Departure (UTC)</span><input id="time" type="datetime-local"></label>
+      <button class="btn primary" id="go" type="submit">Get briefing</button>
+      <button class="btn" id="more" type="button" aria-expanded="false" aria-controls="options">Options</button>
+    </div>
+    <div class="options" id="options" hidden>
+      <label class="fld"><span>Via (ICAO codes or lat,lon)</span><input id="via" class="upper" placeholder="52.46,4.57"></label>
+      <label class="fld"><span>Alternate</span><input id="alternate" class="upper" list="ads" maxlength="4"></label>
+      <label class="fld"><span>Max altitude (ft AMSL)</span><input id="alt" type="number" min="500" max="12000" step="500" value="3000"></label>
+      <label class="fld"><span>NOTAM data</span><select id="source"><option value="live">Live bulletins</option></select></label>
+      <label class="fld wide"><span>Model (Nebius Token Factory)</span><select id="model"></select></label>
+      <label class="toggle"><input type="checkbox" id="prefilter" checked> Route pre-filter</label>
+      <label class="toggle"><input type="checkbox" id="reasoning"> Model reasoning (slower)</label>
+    </div>
+    <div class="presets" id="presets"><span>Test routes</span></div>
+    <datalist id="ads"></datalist>
+  </form>
 </header>
-
-<form class="card" id="f" autocomplete="off">
-  <div class="grid">
-    <div class="f"><label for="dep">Departure</label><input id="dep" class="code-in" list="ads" required maxlength="4" placeholder="EHLE"></div>
-    <div class="f"><label for="dest">Destination</label><input id="dest" class="code-in" list="ads" required maxlength="4" placeholder="EHHV"></div>
-    <div class="f span2"><label for="via">Via (optional: ICAO codes or lat,lon)</label><input id="via" class="code-in" placeholder="52.46,4.57"></div>
-    <div class="f span2"><label for="alternate">Alternate (optional)</label><input id="alternate" class="code-in" list="ads" maxlength="4"></div>
-    <div class="f span2"><label for="time">Departure time (UTC)</label><input id="time" type="datetime-local"></div>
-    <div class="f"><label for="alt">Max altitude (ft AMSL)</label><input id="alt" type="number" min="500" max="12000" step="500" value="3000"></div>
-    <div class="f"><label for="source">NOTAM data</label><select id="source"><option value="live">Live bulletins</option></select></div>
-    <div class="f span2"><label for="model">Model (Nebius Token Factory)</label><select id="model"></select></div>
-  </div>
-  <div class="presets" id="presets"><span>Test routes</span></div>
-  <div class="actions">
-    <button class="go" id="go" type="submit">Get briefing</button>
-    <label class="toggle"><input type="checkbox" id="prefilter" checked> Route pre-filter</label>
-    <label class="toggle"><input type="checkbox" id="reasoning"> Model reasoning (slower)</label>
-    <span id="status"></span>
-  </div>
-  <datalist id="ads"></datalist>
-</form>
-
-<div id="out"></div>
-</main>
+<main class="wrap" id="out"></main>
+<footer class="wrap foot">Decision support, not an official briefing. NOTAMs come from EAD-derived bulletins (notaminfo.com) and weather
+  from aviationweather.gov. Always read the original NOTAMs; the pilot in command makes the final decision.</footer>
 
 <script>
+const FIREBASE = "https://www.gstatic.com/firebasejs/12.3.0/";
+const WIDE_AREA_NM = 25;  // circles this big only bound a region (as in the pre-filter), so the map leaves them out
+const PLANE = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>`;
+const PLAY = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>`;
+const GOOGLE = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+const PRI = {
+  HIGH: {key: "high", label: "High priority", color: "--hi"},
+  MEDIUM: {key: "medium", label: "Medium priority", color: "--me"},
+  LOW: {key: "low", label: "Low priority", color: "--lo"},
+};
+
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let META = null, preset = null;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const hhmm = iso => iso ? iso.slice(11, 13) + iso.slice(14, 16) + "Z" : "";
+const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+const dayMonth = iso => iso ? `${new Date(iso).getUTCDate()} ${MONTHS[new Date(iso).getUTCMonth()]}` : "";
+const short = (s, n = 110) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+const itemId = id => "n-" + id.replace(/[^A-Za-z0-9]/g, "-");
+let META = null, NAMES = {}, preset = null, USER = null, map = null;
 
 function nextHourUTC() {
   const d = new Date(Date.now() + 3600e3); d.setUTCMinutes(0, 0, 0);
   return d.toISOString().slice(0, 16);
 }
-const hhmm = iso => iso ? iso.slice(11, 13) + iso.slice(14, 16) + "Z" : "";
-const day = iso => iso ? iso.slice(0, 10) : "";
+const place = code => NAMES[code] ? `${code} · ${NAMES[code]}` : code;
 
-async function init() {
+async function api(path, body) {
+  const headers = {};
+  if (USER) headers.Authorization = `Bearer ${await USER.getIdToken()}`;
+  if (body) headers["Content-Type"] = "application/json";
+  const r = await fetch(path, {method: body ? "POST" : "GET", headers, body: body && JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(d.detail || r.statusText || "Request failed"), {status: r.status});
+  return d;
+}
+
+// Sign-in: only when the server has a Firebase project configured; locally the app is open.
+async function boot() {
+  $("#logo").innerHTML = PLANE;
   $("#time").value = nextHourUTC();
-  META = await (await fetch("/api/meta")).json();
+  $("#out").innerHTML = `<p class="small"><span class="spin"></span>Loading…</p>`;
+  const cfg = await fetch("/api/config").then(r => r.json()).catch(() => ({}));
+  if (!cfg.firebase) return start();
+  try {
+    const [fbApp, fbAuth] = await Promise.all([import(FIREBASE + "firebase-app.js"), import(FIREBASE + "firebase-auth.js")]);
+    const auth = fbAuth.getAuth(fbApp.initializeApp(cfg.firebase));
+    $("#signout").onclick = () => fbAuth.signOut(auth);
+    fbAuth.onAuthStateChanged(auth, user => {
+      USER = user;
+      $("#user").hidden = !user;
+      $("#user-email").textContent = user ? user.email : "";
+      if (user) start();
+      else gate(() => fbAuth.signInWithPopup(auth, new fbAuth.GoogleAuthProvider()));
+    });
+  } catch (e) {
+    fail(`Google sign-in could not be loaded: ${e.message}`);
+  }
+}
+
+function gate(signIn) {
+  $("#f").hidden = true;
+  $("#out").innerHTML = `<section class="card gate"><div class="logo">${PLANE}</div>
+    <h2>Sign in to get a briefing</h2>
+    <p>Route-specific NOTAMs for VFR flights in the Netherlands and Germany, ranked and explained in plain language.
+      Access is limited to the team and invited guests.</p>
+    <button type="button" class="btn google" id="google">${GOOGLE}Sign in with Google</button>
+    <p class="gate-msg" id="gate-msg"></p></section>`;
+  $("#google").onclick = () => signIn().catch(e => {
+    if (e.code !== "auth/popup-closed-by-user") $("#gate-msg").textContent = e.message;
+  });
+}
+
+async function start() {
+  try {
+    META = META || await api("/api/meta");
+  } catch (e) {
+    return fail(e.message, e.status);
+  }
+  if (!$("#presets .chip")) setupForm();
+  $("#f").hidden = false;
+  if (!$("#out").dataset.briefed) welcome();
+}
+
+function setupForm() {
+  NAMES = Object.fromEntries(META.aerodromes);
   $("#ads").innerHTML = META.aerodromes.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join("");
   for (const s of META.snapshots) {
     const tag = s === META.eval.snapshot ? " (labelled test set)" : "";
@@ -144,18 +303,22 @@ async function init() {
   for (const r of META.routes) {
     const b = document.createElement("button");
     b.type = "button"; b.className = "chip"; b.title = r.why || "";
-    b.textContent = `${r.id} · ${r.dep} → ${r.dest}`;
+    b.innerHTML = `<b>${r.id}</b>${esc(r.dep)} → ${esc(r.dest)}`;
     b.onclick = () => usePreset(r, b);
     $("#presets").appendChild(b);
   }
   const sel = $("#model");
   sel.innerHTML = `<option>${esc(META.default_model)}</option>`;
-  fetch("/api/models").then(r => r.json()).then(d => {
+  api("/api/models").then(d => {
     const ids = d.models.filter(m => !/embed|flux|image|guard|whisper|tts|vl|vision/i.test(m));
     if (!ids.includes(META.default_model)) ids.unshift(META.default_model);
     sel.innerHTML = ids.map(m => `<option ${m === META.default_model ? "selected" : ""}>${esc(m)}</option>`).join("");
   }).catch(() => {});
   for (const id of ["dep", "dest", "via"]) $("#" + id).addEventListener("input", clearPreset);
+  $("#more").onclick = () => {
+    const o = $("#options"); o.hidden = !o.hidden;
+    $("#more").setAttribute("aria-expanded", String(!o.hidden));
+  };
 }
 
 function usePreset(r, btn) {
@@ -164,6 +327,24 @@ function usePreset(r, btn) {
   btn.classList.add("on"); preset = r.id;
 }
 function clearPreset() { preset = null; document.querySelectorAll(".chip").forEach(c => c.classList.remove("on")); }
+
+function welcome() {
+  $("#out").innerHTML = `<section class="card hero">
+    <h2>Only the NOTAMs that affect your flight</h2>
+    <p>Enter a departure and destination, or pick a test route. The full NL and DE bulletins are filtered to your route,
+      height and time, then a model ranks what is left and explains it in plain language, with the original NOTAM alongside.</p>
+    <ol class="steps">
+      <li><b>Pre-filter</b><span>Hundreds of NOTAMs cut to the ones near your route, height and time, in milliseconds.</span></li>
+      <li><b>Assess</b><span>DeepSeek V4 Flash on Nebius rates each one HIGH, MEDIUM or LOW and says why.</span></li>
+      <li><b>Listen</b><span>A short spoken summary of what matters, in radio phraseology.</span></li>
+    </ol></section>`;
+}
+
+function fail(msg, status) {
+  const title = status === 403 ? "No access" : status === 401 ? "Please sign in again" : "Something went wrong";
+  const hint = status === 403 ? "Ask the team to add your Google account, or sign out and use another account." : "";
+  $("#out").innerHTML = `<section class="card error"><b>${title}</b><p>${esc(msg)}</p>${hint ? `<p class="small">${hint}</p>` : ""}</section>`;
+}
 
 $("#f").addEventListener("submit", async e => {
   e.preventDefault();
@@ -175,103 +356,173 @@ $("#f").addEventListener("submit", async e => {
   };
   const go = $("#go"); go.disabled = true;
   const t0 = Date.now();
-  const tick = () => $("#status").innerHTML = `<span class="spin"></span>Filtering bulletins and asking ${esc(body.model.split("/").pop())}… ${Math.round((Date.now() - t0) / 1000)} s`;
+  $("#out").dataset.briefed = "1";
+  $("#out").innerHTML = `<section class="card loading"><span class="spin"></span><span id="progress"></span>
+    <div class="skel"></div><div class="skel short"></div></section>`;
+  const tick = () => $("#progress").textContent =
+    `Filtering the bulletins and asking ${body.model.split("/").pop()}… ${Math.round((Date.now() - t0) / 1000)} s`;
   tick(); const timer = setInterval(tick, 500);
-  $("#out").innerHTML = "";
   try {
-    const r = await fetch("/api/brief", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || r.statusText);
-    render(d);
-    $("#status").textContent = `Done in ${((Date.now() - t0) / 1000).toFixed(1)} s`;
+    render(await api("/api/brief", body));
   } catch (err) {
-    $("#out").innerHTML = `<div class="card err"><b>Briefing failed.</b> ${esc(err.message)}</div>`;
-    $("#status").textContent = "";
+    fail(err.message, err.status);
   } finally { clearInterval(timer); go.disabled = false; }
 });
 
-function itemCard(x) {
-  const p = x.priority.toLowerCase();
-  const valid = [x.valid_from ? `from ${day(x.valid_from)} ${hhmm(x.valid_from)}` : "", x.valid_to_raw ? `to ${x.valid_to_raw}` : "",
-                 x.schedule ? `schedule ${x.schedule}` : ""].filter(Boolean).join(" · ");
-  const geo = x.geometry ? `<div class="geo">Position: ${esc(x.geometry)}</div>` : "";
-  return `<article class="card item p-${p}" style="--c:var(--${p === "high" ? "hi" : p === "medium" ? "me" : "lo"})">
-    <div class="plain">
-      <div class="hdr"><span class="pill p-${p}">${esc(x.priority)}</span><code>${esc(x.id)}</code><span class="loc">${esc(x.location)}</span></div>
-      <p class="sum">${esc(x.summary)}</p>
-      <p class="why">Why it matters: ${esc(x.reason)}</p>
-      ${geo}<div class="valid">${esc(valid)}</div>
-    </div>
-    <pre>${esc(x.raw)}</pre></article>`;
-}
-
 function render(d) {
   const f = d.flight, c = d.counts, m = d.model;
-  const pc = k => d.relevant.filter(x => x.priority === k).length;
+  const count = k => d.relevant.filter(x => x.priority === k).length;
   const countries = d.bulletins.map(b => b.country).join(" + ");
-  const when = f.dep_time ? `dep ${day(f.dep_time)} ${hhmm(f.dep_time)} · arr ${hhmm(f.arr_time)}` : `window ${day(f.window[0])} ${hhmm(f.window[0])}–${hhmm(f.window[1])}`;
-  let h = `<div class="routeline"><h2>${esc(f.dep)} ${esc(f.dep_name)} → ${esc(f.dest)} ${esc(f.dest_name)}</h2>
-    <span class="meta">${f.distance_nm} nm · ${esc(when)} · GND–${f.alt_ft} ft</span></div>
-    <div class="funnel">
-      <div class="card stat"><div class="n">${c.national}</div><div class="l">NOTAMs in the ${esc(countries)} bulletin${d.bulletins.length > 1 ? "s" : ""}</div></div>
-      <div class="card stat"><div class="n">${c.candidates}</div><div class="l">${d.prefilter ? "near your route, altitude and time" : "sent to the model (pre-filter off)"}</div></div>
-      <div class="card stat key"><div class="n">${c.relevant}</div><div class="l">affect this flight</div>
-        <div class="pris">${["HIGH", "MEDIUM", "LOW"].map(k => pc(k) ? `<span class="pill p-${k.toLowerCase()}">${pc(k)} ${k}</span>` : "").join("")}</div></div>
-    </div>
-    <section class="card voice"><button type="button" class="chip" id="listen">Listen to the high and medium items</button>
-      <span id="vstatus" class="small"></span><audio id="player" controls hidden></audio><p id="vscript" class="small" hidden></p></section>`;
-  const wx = d.weather;
-  if (wx.summary || wx.stations.length || wx.error) {
-    h += `<section class="card wx"><h3>Weather</h3>${wx.summary ? `<p>${esc(wx.summary)}</p>` : ""}
-      ${wx.error ? `<p class="small">${esc(wx.error)}</p>` : ""}
-      <div class="st">${wx.stations.map(s => `<div><b>${esc(s.for)}</b> <small>${esc(s.role)}${s.station !== s.for ? ` · no METAR, using ${esc(s.station)} ${s.distance_nm} nm away` : ""}</small>
-        <pre>${esc(s.metar)}${s.taf ? "\n" + esc(s.taf) : ""}</pre></div>`).join("")}</div></section>`;
-  }
+  const when = f.dep_time ? `departs ${dayMonth(f.dep_time)} ${hhmm(f.dep_time)}, arrives ${hhmm(f.arr_time)}`
+                          : `window ${dayMonth(f.window[0])} ${hhmm(f.window[0])}–${hhmm(f.window[1])}`;
+  const cost = m.cost_usd == null ? "" : ` · $${m.cost_usd.toFixed(m.cost_usd < 0.01 ? 4 : 3)}`;
+  document.title = `${f.dep} → ${f.dest} · NOTAM Brief`;
+  let h = `<section class="route">
+      <h2>${esc(f.dep)} <span>${esc(f.dep_name)}</span><i>→</i>${esc(f.dest)} <span>${esc(f.dest_name)}</span></h2>
+      <p>${f.distance_nm} nm · ${esc(when)} · GND to ${f.alt_ft} ft${d.source !== "live" ? ` · snapshot ${esc(d.source)}` : ""}</p>
+    </section>
+    <section class="overview">
+      <div class="card map-card"><div id="map" role="img" aria-label="Route map with the NOTAM areas"></div></div>
+      <aside class="card glance">
+        <div class="funnel">
+          <div><b>${c.national}</b><span>NOTAMs in the ${esc(countries)} bulletin${d.bulletins.length > 1 ? "s" : ""}</span></div>
+          <div><b>${c.candidates}</b><span>${d.prefilter ? "near your route, height and time" : "sent to the model (pre-filter off)"}</span></div>
+          <div class="key"><b>${c.relevant}</b><span>affect this flight</span></div>
+        </div>
+        <div class="pris">${Object.keys(PRI).map(k => count(k) ? `<span class="pill p-${PRI[k].key}">${count(k)} ${k}</span>` : "").join("")}</div>
+        <div class="stats">Briefed in ${d.timing.total_s} s${cost} · ${esc(m.id.split("/").pop())}</div>
+        <div class="listen">
+          <button type="button" class="btn primary" id="listen">${PLAY}Listen to the briefing</button>
+          <span class="vstatus" id="vstatus"></span>
+          <audio id="player" controls hidden></audio>
+          <details id="vtext" hidden><summary>Transcript</summary><p id="vscript"></p></details>
+        </div>
+        ${weather(d.weather)}
+      </aside>
+    </section>`;
   if (d.unassessed.length) {
-    h += `<div class="card warnbox"><b>${d.unassessed.length} NOTAM(s) were not assessed by the model.</b> Read these originals yourself:
-      ${d.unassessed.map(x => `<pre class="mono">${esc(x.raw)}</pre>`).join("")}</div>`;
+    const n = d.unassessed.length;
+    h += `<section class="card warn"><b>${n} NOTAM${n > 1 ? "s were" : " was"} not assessed by the model.</b>
+      Read ${n > 1 ? "these originals" : "this original"} yourself:${d.unassessed.map(x => `<pre>${esc(x.raw)}</pre>`).join("")}</section>`;
   }
-  h += `<section class="sec"><h3>What affects this flight, most important first</h3>`;
-  h += d.relevant.length ? d.relevant.map(itemCard).join("") : `<div class="card empty">No NOTAM in the bulletin affects this flight according to the model. Check the filtered list below.</div>`;
+  h += `<section class="items">`;
+  if (!d.relevant.length) {
+    h += `<div class="card empty">According to the model, no NOTAM affects this flight. Check the nearby NOTAMs below.</div>`;
+  }
+  for (const [k, p] of Object.entries(PRI)) {
+    const xs = d.relevant.filter(x => x.priority === k);
+    if (xs.length) h += `<h3 class="group p-${p.key}"><span class="dot"></span>${p.label}<span class="n">${xs.length}</span></h3>${xs.map(card).join("")}`;
+  }
   h += `</section>`;
   if (d.not_relevant.length) {
-    h += `<details class="card"><summary>${d.not_relevant.length} ${d.prefilter ? "nearby" : ""} NOTAMs judged not relevant, with reasons</summary>
-      ${d.not_relevant.map(x => `<div class="nr"><div class="line"><code>${esc(x.id)}</code><span>${esc(x.location)}</span>${x.geometry ? `<span>· ${esc(x.geometry)}</span>` : ""}</div>
-        <div>${esc(x.reason)}</div><details><summary>original</summary><pre>${esc(x.raw)}</pre></details></div>`).join("")}</details>`;
+    h += `<details class="card more"><summary>${d.not_relevant.length} ${d.prefilter ? "nearby " : ""}NOTAMs judged not relevant, with the reasons</summary>
+      ${d.not_relevant.map(x => `<div class="nr"><div class="nr-head"><code>${esc(x.id)}</code><span>${esc(place(x.location))}</span></div>
+        <p>${esc(x.reason)}</p>${x.geometry ? `<p class="small">${esc(x.geometry)}</p>` : ""}
+        <details><summary>Original NOTAM</summary><pre>${esc(x.raw)}</pre></details></div>`).join("")}</details>`;
   }
-  const u = m.usage, cost = m.cost_usd == null ? "n/a" : "$" + m.cost_usd.toFixed(m.cost_usd < 0.01 ? 5 : 4);
-  h += `<div class="card foot">
+  h += hood(d);
+  $("#out").innerHTML = h;
+  $("#listen").onclick = () => listen(d);
+  try {
+    drawMap(d);
+  } catch (e) {  // a map problem must never hide the briefing
+    console.error(e);
+    $(".map-card").remove();
+  }
+}
+
+function card(x) {
+  const p = PRI[x.priority];
+  const rawTo = x.valid_to_raw || "";
+  const until = x.valid_to ? `to ${dayMonth(x.valid_to)} ${hhmm(x.valid_to)}${/EST/.test(rawTo) ? " (estimated)" : ""}`
+              : /PERM/.test(rawTo) ? "permanent" : rawTo ? `to ${rawTo}` : "";
+  const valid = [x.valid_from ? `from ${dayMonth(x.valid_from)} ${hhmm(x.valid_from)}` : "", until,
+                 x.schedule ? `schedule ${x.schedule}` : ""].filter(Boolean).join(" · ");
+  return `<article class="card item p-${p.key}" id="${itemId(x.id)}">
+    <header><span class="pill p-${p.key}">${esc(x.priority)}</span><span class="loc">${esc(place(x.location))}</span><code>${esc(x.id)}</code></header>
+    <p class="sum">${esc(x.summary)}</p>
+    <p class="why">${esc(x.reason)}</p>
+    <dl class="facts">${x.geometry ? `<div><dt>Where</dt><dd>${esc(x.geometry)}</dd></div>` : ""}${valid ? `<div><dt>When</dt><dd>${esc(valid)}</dd></div>` : ""}</dl>
+    <details class="raw"><summary>Original NOTAM</summary><pre>${esc(x.raw)}</pre></details>
+  </article>`;
+}
+
+function weather(wx) {
+  if (!wx.summary && !wx.stations.length && !wx.error) return "";
+  const station = s => `<div class="st"><b>${esc(s.for)}</b> <small>${esc(s.role)}${s.station !== s.for ? ` · no METAR, using ${esc(s.station)} ${s.distance_nm} nm away` : ""}</small>
+    <pre>${esc(s.metar)}${s.taf ? "\n" + esc(s.taf) : ""}</pre></div>`;
+  return `<div class="wx"><h4>Weather</h4>${wx.summary ? `<p>${esc(wx.summary)}</p>` : ""}${wx.error ? `<p class="small">${esc(wx.error)}</p>` : ""}
+    ${wx.stations.length ? `<details><summary>METAR and TAF</summary>${wx.stations.map(station).join("")}</details>` : ""}</div>`;
+}
+
+function hood(d) {
+  const m = d.model, u = m.usage, c = d.counts;
+  const cost = m.cost_usd == null ? "n/a" : "$" + m.cost_usd.toFixed(m.cost_usd < 0.01 ? 5 : 4);
+  return `<details class="card hood"><summary>How this briefing was made</summary><div class="hood-grid">
     <div><b>Model</b>${esc(m.id)}${m.reasoning && m.reasoning !== "none" ? " (reasoning on)" : ""}</div>
     <div><b>Tokens in / out</b>${u.prompt_tokens.toLocaleString()} / ${u.completion_tokens.toLocaleString()}</div>
     <div><b>Cost</b>${cost}</div>
     <div><b>Pre-filter</b>${d.timing.prefilter_ms} ms (${c.national} → ${c.candidates})</div>
-    <div><b>Model latency</b>${m.latency_s} s${m.calls > 1 ? ` (${m.calls} calls)` : ""}</div>
+    <div><b>Model time</b>${m.latency_s} s${m.calls > 1 ? ` (${m.calls} calls)` : ""}</div>
     <div><b>Total</b>${d.timing.total_s} s</div>
-    <div><b>Bulletins</b>${d.bulletins.map(b => `${esc(b.country)} ${esc(day(b.generated))} ${esc(hhmm(b.generated))}`).join(", ")}${d.source !== "live" ? ` (snapshot)` : ""}</div>
-  </div>${m.errors.length ? `<p class="small">Model notes: ${esc(m.errors.join("; "))}</p>` : ""}
-  <p class="small">The bulletins are EAD-derived and not official documents. Always read the original NOTAMs; the pilot in command makes the final decision.</p>`;
-  $("#out").innerHTML = h;
-  $("#listen").onclick = () => listen(d);
+    <div><b>Bulletins</b>${d.bulletins.map(b => `${esc(b.country)} ${esc(dayMonth(b.generated))} ${esc(hhmm(b.generated))}`).join(", ")}</div>
+  </div>${m.errors.length ? `<p class="small">Model notes: ${esc(m.errors.join("; "))}</p>` : ""}</details>`;
+}
+
+function drawMap(d) {
+  if (map) { map.remove(); map = null; }
+  map = L.map("map", {scrollWheelZoom: false});
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+  const accent = cssVar("--accent"), surface = cssVar("--surface");
+  const route = L.polyline(d.flight.path.map(p => [p[1], p[2]]), {color: accent, weight: 3}).addTo(map);
+  d.flight.path.forEach(([label, lat, lon], i) => {
+    const end = i === 0 || i === d.flight.path.length - 1;
+    L.circleMarker([lat, lon], {radius: end ? 6 : 4, color: accent, weight: 2, fillColor: surface, fillOpacity: 1})
+      .bindTooltip(esc(label), {permanent: end, direction: "top", offset: [0, -6], className: "wp"}).addTo(map);
+  });
+  // One circle per NOTAM area; several NOTAMs often share one (all of an aerodrome's, for example).
+  const areas = new Map();
+  for (const x of d.relevant) {
+    if (x.lat == null || x.lon == null || !x.radius_nm || x.radius_nm >= WIDE_AREA_NM) continue;
+    const k = `${x.lat},${x.lon},${x.radius_nm}`;
+    areas.set(k, [...(areas.get(k) || []), x]);
+  }
+  const bounds = route.getBounds();
+  for (const xs of [...areas.values()].reverse()) {  // highest priority drawn last, on top
+    const top = xs[0], color = cssVar(PRI[top.priority].color);
+    const metres = top.radius_nm * 1852;
+    L.circle([top.lat, top.lon], {radius: metres, color, weight: 1.5, fillColor: color, fillOpacity: .14})
+      .bindTooltip(xs.map(x => `<b>${esc(x.priority)}</b> ${esc(x.id)} · ${esc(short(x.summary))}`).join("<br>"), {sticky: true})
+      .on("click", () => focusItem(top.id)).addTo(map);
+    bounds.extend(L.latLng(top.lat, top.lon).toBounds(2 * metres));
+  }
+  map.fitBounds(bounds, {padding: [28, 28]});
+}
+
+function focusItem(id) {
+  const el = document.getElementById(itemId(id));
+  if (!el) return;
+  el.scrollIntoView({behavior: "smooth", block: "center"});
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
 }
 
 async function listen(d) {
-  const a = $("#player");
-  if (a.src) return a.play();
-  const btn = $("#listen"); btn.disabled = true;
+  const a = $("#player"), btn = $("#listen");
+  btn.disabled = true;
   $("#vstatus").innerHTML = `<span class="spin"></span>Writing and recording the summary…`;
   try {
-    const r = await fetch("/api/voice", {method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({flight: d.flight, items: d.relevant, unassessed: d.unassessed.length})});
-    const v = await r.json();
-    if (!r.ok) throw new Error(v.detail || r.statusText);
+    const v = await api("/api/voice", {flight: d.flight, items: d.relevant, unassessed: d.unassessed.length});
     a.src = "data:audio/mpeg;base64," + v.audio; a.hidden = false; a.play().catch(() => {});
-    $("#vscript").textContent = v.script; $("#vscript").hidden = false;
-    $("#vstatus").textContent = "";
+    $("#vscript").textContent = v.script; $("#vtext").hidden = false;
+    $("#vstatus").textContent = ""; btn.hidden = true;  // the player takes over from here
   } catch (err) {
     $("#vstatus").textContent = `Voice summary failed: ${err.message}`;
   } finally { btn.disabled = false; }
 }
-init();
+
+boot();
 </script>
 </body>
 </html>
