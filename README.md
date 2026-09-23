@@ -17,8 +17,9 @@ uvicorn app:app --port 8765
 ```
 
 Open http://localhost:8765, click one of the five test routes (or type any NL/DE aerodrome codes) and press
-**Get briefing**. Choose **Snapshot 2026-09-22 (labelled test set)** under *NOTAM data* to reproduce the
-labelled scenario, or **Live bulletins** for today's NOTAMs.
+**Get briefing**. Under **Options → NOTAM data**, choose **Snapshot 2026-09-22 (labelled test set)** to reproduce
+the labelled scenario, or **Live bulletins** for today's NOTAMs. Locally the app needs no sign-in unless you set
+the Firebase variables (see [Deploy](#deploy)).
 
 From the command line:
 
@@ -66,9 +67,14 @@ flowchart LR
    priority, a one-line reason and a plain-language summary. The JSON schema pins the NOTAM ids and the item
    count. If a response is truncated or invalid, the chunk is split and retried. Any NOTAM the model still
    skips is shown to the pilot as *not assessed*, never dropped silently.
-5. **Output** ([app.py](app.py), [static/index.html](static/index.html)): weather at the top, then the
-   ranked items with the original ICAO text beside each one, then the NOTAMs judged not relevant with the
-   reasons.
+5. **Output** ([app.py](app.py), [static/index.html](static/index.html)):
+   - A route map shows the track and the area of each relevant NOTAM, coloured by priority. Clicking an area
+     jumps to its card.
+   - An at-a-glance panel beside the map shows how far the bulletin was cut, the priority counts, the voice
+     summary and the weather.
+   - Below them come the HIGH, MEDIUM and LOW cards. Each has the plain-language summary, why it matters, where
+     and when it applies, and the original ICAO text folded underneath.
+   - The NOTAMs judged not relevant come last, each with its reason.
 6. **Voice summary** ([briefing/voice.py](briefing/voice.py), [prompts/voice_prompt.md](prompts/voice_prompt.md)):
    the **Listen** button sends the HIGH and MEDIUM items to the same model. The model turns them into a short
    spoken brief: facts only, similar items grouped, and no ids, coordinates or advice. ElevenLabs then reads
@@ -144,6 +150,44 @@ It runs on the frozen snapshot in `data/snapshots/2026-09-22/`. `--modes full` s
 without the pre-filter, chunked into 80 NOTAMs per request. Run `pytest` to check that the snapshot still
 produces exactly the labelled candidate sets.
 
+## Deploy
+
+The app runs on [Vercel](https://vercel.com) (free Hobby plan) with Google sign-in through Firebase
+Authentication (free Spark plan).
+- Vercel finds the FastAPI `app` in [app.py](app.py) and serves the page and the API as one serverless function.
+  A request may run for up to 300 s, and every push to `main` redeploys.
+- Firebase only handles sign-in. On Spark it cannot run the Python API: Cloud Functions and Cloud Run both need
+  billing.
+
+1. **Firebase** ([console](https://console.firebase.google.com)):
+   1. Create a project on the Spark plan.
+   2. Under **Project settings → Your apps**, add a Web app and copy its `apiKey`.
+   3. Under **Authentication → Sign-in method**, enable **Google**.
+   4. Under **Authentication → Settings → Authorized domains**, add your Vercel domain, e.g.
+      `notam-brief.vercel.app`.
+2. **Vercel**: sign in with GitHub, then **Add New → Project** and import this repository. Set these environment
+   variables and deploy:
+
+   | Variable | Value |
+   |---|---|
+   | `NEBIUS_API_KEY` | Nebius Token Factory key |
+   | `ELEVENLABS_API_KEY` | ElevenLabs key with the text-to-speech permission |
+   | `FIREBASE_PROJECT_ID` | Firebase project ID |
+   | `FIREBASE_API_KEY` | the Web app's `apiKey` (public by design; it identifies the project) |
+   | `ALLOWED_EMAILS` | comma-separated Google accounts that may use the app |
+
+How sign-in works:
+- The page signs in with Google and sends the Firebase ID token with every API call.
+- The server checks the token's signature, project and issuer, and accepts only verified addresses listed in
+  `ALLOWED_EMAILS`.
+- On Vercel the API refuses every call until `FIREBASE_PROJECT_ID` is set, so a missing setting can't leave it
+  open. Locally, add the same three variables to `.env` to try sign-in on `localhost`, which Firebase allows by
+  default.
+
+Notes:
+- On Vercel the live bulletins are cached in `/tmp`, the only writable directory.
+- If notaminfo.com blocks Vercel's servers, the snapshot under **Options** still works.
+
 ## Data sources and caveats
 
 - **NOTAMs:** [notaminfo.com](https://notaminfo.com/latest?country=Netherlands). These are EAD-derived PIBs,
@@ -154,6 +198,7 @@ produces exactly the labelled candidate sets.
 - **Model:** [Nebius Token Factory](https://tokenfactory.nebius.com/), an OpenAI-compatible API
   (`https://api.tokenfactory.nebius.com/v1`). Set `NEBIUS_API_KEY` in `.env`. On Windows a key set with
   `setx` is also picked up.
+- **Map:** [Leaflet](https://leafletjs.com) with [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles.
 - **Voice:** [ElevenLabs text-to-speech](https://elevenlabs.io/docs/api-reference/text-to-speech/convert) with
   the `eleven_multilingual_v2` model, at normal speed (1.0) and stability 0.85 (default 0.5) for an even delivery.
 

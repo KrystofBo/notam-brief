@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-CACHE = DATA / "cache"
+CACHE = Path("/tmp/notam-cache") if os.environ.get("VERCEL") else DATA / "cache"  # Vercel: only /tmp is writable
 SNAPSHOTS = DATA / "snapshots"
 PROMPTS = ROOT / "prompts"
 EVAL = ROOT / "eval"
